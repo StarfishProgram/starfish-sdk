@@ -169,7 +169,7 @@ func CheckError(err error, throwErr ...error) {
 		if throwErr != nil {
 			panic(throwErr[0])
 		} else {
-			panic(errors.New("检查失败"))
+			panic(err)
 		}
 	}
 }

@@ -53,9 +53,11 @@ require (
 )
 
 require (
+	github.com/bwmarrin/snowflake v0.3.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/golang-jwt/jwt/v4 v4.5.0
+	github.com/satori/go.uuid v1.2.0
 	github.com/spf13/viper v1.18.2
 	go.uber.org/multierr v1.10.0 // indirect
 	golang.org/x/exp v0.0.0-20240416160154-fe59bbe5cc7f

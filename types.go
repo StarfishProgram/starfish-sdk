@@ -12,3 +12,5 @@ func (r *Result[D]) IsOk() bool {
 func (r *Result[D]) IsFaild() bool {
 	return !r.IsOk()
 }
+
+type ID int64
