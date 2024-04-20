@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 	"errors"
 	"strconv"
+	"time"
 )
 
 type Result[D any] struct {
@@ -49,4 +50,11 @@ func (v *ID) UnmarshalJSON(src []byte) error {
 	}
 	*v = ID(d)
 	return nil
+}
+
+type BaseModel struct {
+	ID        uint       `gorm:"primarykey;type:bigint;not null;comment:'ID';"`
+	CreatedAt time.Time  `gorm:"->;type:timestamp;default:current_timestamp;not null;comment:'创建时间';"`
+	UpdatedAt time.Time  `gorm:"->;type:timestamp;default:current_timestamp on update current_timestamp;not null;comment:'修改时间';"`
+	DeletedAt *time.Time `gorm:"->;type:timestamp;index;comment:'删除时间';"`
 }
