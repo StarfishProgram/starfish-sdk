@@ -53,8 +53,17 @@ func (v *ID) UnmarshalJSON(src []byte) error {
 }
 
 type BaseModel struct {
-	UID        uint       `gorm:"primarykey;type:bigint;not null;comment:ID;" json:"uid"`
+	ID         ID         `gorm:"primarykey;type:bigint;not null;comment:ID;" json:"id"`
 	CreateTime time.Time  `gorm:"->;type:timestamp;default:current_timestamp;not null;comment:创建时间;" json:"create_time"`
 	UpdateTime time.Time  `gorm:"->;type:timestamp;default:current_timestamp on update current_timestamp;not null;comment:修改时间;" json:"update_time"`
 	DeleteTime *time.Time `gorm:"->;type:timestamp;index;comment:删除时间;" json:"-"`
+}
+
+func NewBaseModel() BaseModel {
+	return BaseModel{
+		ID:         UUID().ID(),
+		CreateTime: time.Time{},
+		UpdateTime: time.Time{},
+		DeleteTime: nil,
+	}
 }
