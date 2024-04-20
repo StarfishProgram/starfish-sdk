@@ -71,6 +71,7 @@ func InitDatabase(config *DatabaseConfig, key ...string) {
 		CreateBatchSize:        1000,
 		Logger:                 dbLog,
 		SkipDefaultTransaction: true,
+		DisableAutomaticPing:   true,
 	})
 
 	if err != nil {
