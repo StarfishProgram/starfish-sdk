@@ -3,6 +3,8 @@ package sdkweb
 import (
 	"net/http"
 
+	"github.com/StarfishProgram/starfish-sdk/sdk"
+	"github.com/StarfishProgram/starfish-sdk/sdkcodes"
 	"github.com/StarfishProgram/starfish-sdk/sdklog"
 	"github.com/gin-gonic/gin"
 )
@@ -29,4 +31,13 @@ func MWCors(ctx *gin.Context) {
 		return
 	}
 	ctx.Next()
+}
+
+func MWRequestParam[T any](call func(*gin.Context, *T)) func(*gin.Context) {
+	return func(ctx *gin.Context) {
+		var p T
+		err := ctx.ShouldBind(&p)
+		sdk.CheckError(err, sdkcodes.ParamInvalid.WithMsg("%s", err.Error()))
+		call(ctx, &p)
+	}
 }

@@ -15,21 +15,23 @@ type Config struct {
 	Listen string `toml:"listen" ` // 监听地址
 }
 
-func WebMWRequestParam[T any](call func(*gin.Context, *T)) func(*gin.Context) {
-	return func(ctx *gin.Context) {
-		var p T
-		err := ctx.ShouldBind(&p)
-		sdk.CheckError(err, sdkcodes.ParamInvalid.WithMsg("%s", err.Error()))
-		call(ctx, &p)
-	}
+type MapData map[string]any
+
+func SuccessResponse(ctx *gin.Context, data any) {
+	ctx.JSON(http.StatusOK, gin.H{
+		"code": sdkcodes.OK.Code(),
+		"msg":  sdkcodes.OK.Msg(),
+		"i18n": sdkcodes.OK.I18n(),
+		"data": data,
+	})
 }
 
-func WebRpsJson(ctx *gin.Context, code sdkcodes.Code, data any) {
+func ErrorResponse(ctx *gin.Context, code sdkcodes.Code) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"code": code.Code(),
 		"msg":  code.Msg(),
 		"i18n": code.I18n(),
-		"data": data,
+		"data": nil,
 	})
 }
 
@@ -39,7 +41,7 @@ func Init(config *Config, routers func(eng *gin.Engine)) chan os.Signal {
 	server := gin.New()
 	server.Use(MWCatch, MWCors)
 	server.NoRoute(func(ctx *gin.Context) {
-		WebRpsJson(ctx, sdkcodes.Internal, nil)
+		ErrorResponse(ctx, sdkcodes.Internal)
 	})
 	if routers != nil {
 		routers(server)
