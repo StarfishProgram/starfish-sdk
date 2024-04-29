@@ -44,9 +44,9 @@ func (s *_Server) Call(ctx context.Context, param *anypb.Any) (result *Result, e
 	call, ok := s.calls[param.TypeUrl]
 	if !ok {
 		result.Code = &Code{
-			Code: sdkcodes.ParamInvalid.Code(),
-			Msg:  sdkcodes.ParamInvalid.Msg(),
-			I18N: sdkcodes.ParamInvalid.I18n(),
+			Code: sdkcodes.RequestNotFound.Code(),
+			Msg:  sdkcodes.RequestNotFound.Msg(),
+			I18N: sdkcodes.RequestNotFound.I18n(),
 		}
 		return
 	}
@@ -59,11 +59,10 @@ func (s *_Server) Call(ctx context.Context, param *anypb.Any) (result *Result, e
 					Msg:  code.Msg(),
 					I18N: code.I18n(),
 				}
-
-				sdklog.Ins().Warn(code)
+				sdklog.Ins().AddCallerSkip(3).Warn(code)
 				return
 			}
-			sdklog.Ins().Error(err)
+			sdklog.Ins().AddCallerSkip(2).Error(err)
 			result.Code = &Code{
 				Code: sdkcodes.Internal.Code(),
 				Msg:  sdkcodes.Internal.Msg(),
@@ -136,7 +135,7 @@ func ClientCall[P, R protoreflect.ProtoMessage](client *_Client, param P) Client
 		return ClientCallResult[R]{
 			Code: &Code{
 				Code: sdkcodes.Internal.Code(),
-				Msg:  sdkcodes.Internal.Msg(),
+				Msg:  err.Error(),
 				I18N: sdkcodes.Internal.I18n(),
 			},
 			Data: r,
@@ -145,22 +144,25 @@ func ClientCall[P, R protoreflect.ProtoMessage](client *_Client, param P) Client
 	result, err := client.client.Call(sdk.Context(), anyParam)
 	if err != nil {
 		sdklog.Ins().AddCallerSkip(1).Error(err)
-		return ClientCallResult[R]{Code: &Code{
-			Code: sdkcodes.Internal.Code(),
-			Msg:  sdkcodes.Internal.Msg(),
-			I18N: sdkcodes.Internal.I18n(),
-		}, Data: r}
+		return ClientCallResult[R]{
+			Code: &Code{
+				Code: sdkcodes.Internal.Code(),
+				Msg:  err.Error(),
+				I18N: sdkcodes.Internal.I18n(),
+			},
+			Data: r,
+		}
 	}
 	realData := reflect.New(reflect.TypeOf(r).Elem()).Interface().(R)
 	if err := result.Data.UnmarshalTo(realData); err != nil {
-		return ClientCallResult[R]{Code: &Code{
-			Code: sdkcodes.Internal.Code(),
-			Msg:  sdkcodes.Internal.Msg(),
-			I18N: sdkcodes.Internal.I18n(),
-		}, Data: r}
+		return ClientCallResult[R]{
+			Code: &Code{
+				Code: sdkcodes.Internal.Code(),
+				Msg:  err.Error(),
+				I18N: sdkcodes.Internal.I18n(),
+			},
+			Data: r,
+		}
 	}
-	return ClientCallResult[R]{
-		Code: result.Code,
-		Data: realData,
-	}
+	return ClientCallResult[R]{Data: realData}
 }
