@@ -1,4 +1,4 @@
-package starfish_sdk
+package sdk
 
 import "os"
 
@@ -6,14 +6,14 @@ type Signal struct {
 	chs []chan os.Signal
 }
 
-func (s *Signal) AddChans(chs ...chan os.Signal) {
+func (s *Signal) Add(chs ...chan os.Signal) {
 	s.chs = append(s.chs, chs...)
 }
 
 func (s *Signal) Waiting() os.Signal {
-	Log().Info("程序已就绪")
+	println("程序已就绪")
 	sign := Waiting()
-	Log().Info("收到终止信号", sign)
+	println("收到终止信号", sign)
 	for index := range s.chs {
 		ch := s.chs[index]
 		ch <- sign
@@ -22,10 +22,10 @@ func (s *Signal) Waiting() os.Signal {
 		ch := s.chs[index]
 		<-ch
 	}
-	Log().Info("程序已停止")
+	println("程序已停止")
 	return sign
 }
 
-func SignalNew() *Signal {
+func NewSignal() *Signal {
 	return &Signal{chs: []chan os.Signal{}}
 }

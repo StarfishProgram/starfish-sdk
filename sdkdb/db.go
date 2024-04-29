@@ -1,17 +1,19 @@
-package starfish_sdk
+package sdkdb
 
 import (
 	"fmt"
 	"time"
 
+	"github.com/StarfishProgram/starfish-sdk/sdk"
+	"github.com/StarfishProgram/starfish-sdk/sdklog"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 )
 
-// DatabaseConfig 数据源配置
-type DatabaseConfig struct {
+// Config 数据源配置
+type Config struct {
 	Host        string `toml:"host"`        // 主机
 	Port        int    `toml:"port"`        // 端口
 	User        string `toml:"user"`        // 用户名
@@ -25,20 +27,20 @@ type DatabaseConfig struct {
 	SlowTime    int64  `toml:"slowTime"`    // 慢查询时间(毫秒)
 }
 
-type databaseWriter struct{}
+type _LogWriter struct{}
 
-func (*databaseWriter) Printf(format string, v ...interface{}) {
-	Log().Infof(format, v...)
+func (*_LogWriter) Printf(format string, v ...interface{}) {
+	sdklog.Ins().Infof(format, v...)
 }
 
-var databaseIns map[string]*gorm.DB
+var ins map[string]*gorm.DB
 
 func init() {
-	databaseIns = make(map[string]*gorm.DB)
+	ins = make(map[string]*gorm.DB)
 }
 
-// InitDatabase 数据源初始化
-func InitDatabase(config *DatabaseConfig, key ...string) {
+// Init 数据源初始化
+func Init(config *Config, key ...string) {
 	dsn := fmt.Sprintf("%v:%v@tcp(%v:%v)/%v?%v",
 		config.User,
 		config.Password,
@@ -55,10 +57,10 @@ func InitDatabase(config *DatabaseConfig, key ...string) {
 	}
 
 	dbLog := logger.New(
-		&databaseWriter{},
+		&_LogWriter{},
 		logger.Config{
 			SlowThreshold:             time.Millisecond * time.Duration(config.SlowTime),
-			LogLevel:                  If(config.ShowSql, logger.Info, logger.Error),
+			LogLevel:                  sdk.If(config.ShowSql, logger.Info, logger.Error),
 			IgnoreRecordNotFoundError: true,
 			ParameterizedQueries:      true,
 			Colorful:                  false,
@@ -75,11 +77,11 @@ func InitDatabase(config *DatabaseConfig, key ...string) {
 	})
 
 	if err != nil {
-		panic(CodeServerError.WithMsgf("数据源连接创建失败 : %s", err.Error()))
+		panic(err)
 	}
 	sqlDB, err := db.DB()
 	if err != nil {
-		panic(CodeServerError.WithMsgf("数据源连接创建失败 : %s", err.Error()))
+		panic(err)
 	}
 
 	sqlDB.SetMaxIdleConns(config.MaxIdleConn)
@@ -87,17 +89,17 @@ func InitDatabase(config *DatabaseConfig, key ...string) {
 	sqlDB.SetConnMaxIdleTime(time.Duration(config.MaxLifetime) * time.Second)
 
 	if len(key) == 0 {
-		databaseIns[""] = db
+		ins[""] = db
 	} else {
-		databaseIns[key[0]] = db
+		ins[key[0]] = db
 	}
 }
 
-// Database 获取数据源
-func Database(key ...string) *gorm.DB {
+// Ins 获取数据源
+func Ins(key ...string) *gorm.DB {
 	if len(key) == 0 {
-		return databaseIns[""]
+		return ins[""]
 	} else {
-		return databaseIns[key[0]]
+		return ins[key[0]]
 	}
 }

@@ -1,4 +1,4 @@
-package starfish_sdk
+package sdk
 
 import (
 	"net/http"

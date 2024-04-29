@@ -1,4 +1,4 @@
-package starfish_sdk
+package sdk
 
 import (
 	"context"
@@ -7,9 +7,14 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/shopspring/decimal"
 	"golang.org/x/exp/constraints"
 	"gorm.io/gorm"
 )
+
+func init() {
+	decimal.DivisionPrecision = 16
+}
 
 // Waiting 信号阻塞等待
 func Waiting() os.Signal {
@@ -131,7 +136,7 @@ func Go(call func()) {
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
-				Log().AddCallerSkip(1).Error(err)
+				println(err)
 			}
 		}()
 		call()

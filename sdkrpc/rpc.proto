@@ -1,0 +1,29 @@
+syntax = "proto3";
+package sdkrpc;
+option go_package = "github.com/StarfishProgram/starfish-sdk/sdkrpc;sdkrpc";
+
+import "google/protobuf/any.proto";
+
+// 状态码
+message Code {
+    // 状态码
+    int64 code = 1;
+    // 消息
+	string msg = 2;
+    // 国际化key
+    string i18n = 3;
+}
+
+// 返回结果
+message Result {
+    // 状态码
+    Code code = 1;
+    // 数据
+    google.protobuf.Any data = 2;
+}
+
+// RPC
+service GRPCService {
+    // Call
+    rpc Call (google.protobuf.Any) returns (Result) {}
+}
