@@ -12,7 +12,7 @@ import (
 
 // Config WEB配置
 type Config struct {
-	Listen string `toml:"listen" ` // 监听地址
+	Listen string `toml:"listen"` // 监听地址
 }
 
 type MapData map[string]any
