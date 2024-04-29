@@ -37,6 +37,7 @@ func ServerRegisterCall[P, R protoreflect.ProtoMessage](server *_Server, call fu
 		sdk.CheckError(err, sdkcodes.Internal.WithMsg("%s", err.Error()))
 		return resultData
 	}
+	sdklog.Ins().AddCallerSkip(1).Info("RPC服务注册 :", paramAny.TypeUrl)
 }
 
 func (s *_Server) Call(ctx context.Context, param *anypb.Any) (result *Result, err error) {
@@ -123,16 +124,24 @@ func InitClient(url string, key ...string) {
 	}
 }
 
-type ClientCallResult[D protoreflect.ProtoMessage] struct {
+func Client(key ...string) *_Client {
+	if len(key) == 0 {
+		return clientIns[""]
+	} else {
+		return clientIns[key[0]]
+	}
+}
+
+type CallResult[D protoreflect.ProtoMessage] struct {
 	Code *Code
 	Data D
 }
 
-func ClientCall[P, R protoreflect.ProtoMessage](client *_Client, param P) ClientCallResult[R] {
+func Call[P, R protoreflect.ProtoMessage](client *_Client, param P) CallResult[R] {
 	var r R
 	anyParam, err := anypb.New(param)
 	if err != nil {
-		return ClientCallResult[R]{
+		return CallResult[R]{
 			Code: &Code{
 				Code: sdkcodes.Internal.Code(),
 				Msg:  err.Error(),
@@ -144,18 +153,28 @@ func ClientCall[P, R protoreflect.ProtoMessage](client *_Client, param P) Client
 	result, err := client.client.Call(sdk.Context(), anyParam)
 	if err != nil {
 		sdklog.Ins().AddCallerSkip(1).Error(err)
-		return ClientCallResult[R]{
+		return CallResult[R]{
 			Code: &Code{
 				Code: sdkcodes.Internal.Code(),
 				Msg:  err.Error(),
 				I18N: sdkcodes.Internal.I18n(),
+			},
+			Data: r,
+		}
+	}
+	if result.Code != nil {
+		return CallResult[R]{
+			Code: &Code{
+				Code: result.Code.Code,
+				Msg:  result.Code.Msg,
+				I18N: result.Code.I18N,
 			},
 			Data: r,
 		}
 	}
 	realData := reflect.New(reflect.TypeOf(r).Elem()).Interface().(R)
 	if err := result.Data.UnmarshalTo(realData); err != nil {
-		return ClientCallResult[R]{
+		return CallResult[R]{
 			Code: &Code{
 				Code: sdkcodes.Internal.Code(),
 				Msg:  err.Error(),
@@ -164,5 +183,5 @@ func ClientCall[P, R protoreflect.ProtoMessage](client *_Client, param P) Client
 			Data: r,
 		}
 	}
-	return ClientCallResult[R]{Data: realData}
+	return CallResult[R]{Data: realData}
 }
