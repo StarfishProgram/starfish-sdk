@@ -41,7 +41,7 @@ func Init(config *Config, routers func(eng *gin.Engine)) chan os.Signal {
 	server := gin.New()
 	server.Use(MWCatch, MWCors)
 	server.NoRoute(func(ctx *gin.Context) {
-		ErrorResponse(ctx, sdkcodes.Internal)
+		ErrorResponse(ctx, sdkcodes.RequestNotFound)
 	})
 	if routers != nil {
 		routers(server)
