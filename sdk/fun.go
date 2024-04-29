@@ -157,7 +157,7 @@ func Check(expr bool, code ...sdkcodes.Code) {
 		if code != nil {
 			panic(code[0])
 		} else {
-			panic(sdkcodes.Internal)
+			panic(sdkcodes.Internal.WithMsg("expr is false"))
 		}
 	}
 }
@@ -168,7 +168,7 @@ func CheckNil[V *any](v V, code ...sdkcodes.Code) {
 		if code != nil {
 			panic(code[0])
 		} else {
-			panic(sdkcodes.Internal)
+			panic(sdkcodes.Internal.WithMsg("value is nil"))
 		}
 	}
 }
@@ -182,7 +182,7 @@ func CheckError(err error, code ...sdkcodes.Code) {
 		if code != nil {
 			panic(code[0])
 		} else {
-			panic(sdkcodes.Internal)
+			panic(sdkcodes.Internal.WithMsg("%s", err.Error()))
 		}
 	}
 }
