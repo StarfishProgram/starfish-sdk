@@ -49,7 +49,7 @@ func Init(nodeSeq int64, key ...string) {
 	}
 }
 
-// UUID 获取UUID
+// Ins 获取UUID
 func Ins(key ...string) UUID {
 	if len(key) == 0 {
 		return ins[""]

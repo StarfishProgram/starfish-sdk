@@ -1,4 +1,4 @@
-package sdk
+package sdkredis
 
 import (
 	"encoding/json"
@@ -6,11 +6,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/StarfishProgram/starfish-sdk/sdk"
+	"github.com/StarfishProgram/starfish-sdk/sdkcodes"
+	"github.com/StarfishProgram/starfish-sdk/sdktypes"
 	"github.com/go-redis/redis"
 )
 
-// RedisConfig Redis配置
-type RedisConfig struct {
+// Config Redis配置
+type Config struct {
 	Host     string `toml:"host"`     // 主机
 	Port     int    `toml:"port"`     // 端口
 	Password string `toml:"password"` // 密码
@@ -18,44 +21,25 @@ type RedisConfig struct {
 	Prefix   string `toml:"prefix"`   // 前缀
 }
 
-type IRedisSelectKey interface {
-	// Keys 选择Key
-	Keys(keys ...string) IRedisSelectKey
-	// OP 执行操作
-	OP() IRedisOP
-}
-
-type redisSelectKey struct {
-	ins  *_redis
+type _RedisSelectKey struct {
+	ins  *_Redis
 	keys []string
 }
 
-func (r *redisSelectKey) Keys(keys ...string) IRedisSelectKey {
+func (r *_RedisSelectKey) Keys(keys ...string) SelectKey {
 	r.keys = append(r.keys, keys...)
 	return r
 }
 
-func (r *redisSelectKey) OP() IRedisOP {
-	return &redisOP{ins: r}
+func (r *_RedisSelectKey) OP() Oper {
+	return &_RedisOper{ins: r}
 }
 
-type IRedisOP interface {
-	// Get 获取值
-	Get(v any) ICode
-	// Set 设置值
-	Set(val any, expr ...time.Duration) ICode
-	// IncrByInt 递增
-	IncrByInt(val int64) Result[int64]
-	// IncrByFloat 递增
-	IncrByFloat(val float64) Result[float64]
-	// Del 删除Key
-	Del() ICode
-}
-type redisOP struct {
-	ins *redisSelectKey
+type _RedisOper struct {
+	ins *_RedisSelectKey
 }
 
-func (op *redisOP) buildKey() string {
+func (op *_RedisOper) buildKey() string {
 	opKey := make([]string, len(op.ins.keys)+1)
 	if op.ins.ins.prefix != "" {
 		opKey = append(opKey, op.ins.ins.prefix)
@@ -66,144 +50,144 @@ func (op *redisOP) buildKey() string {
 	return strings.Join(opKey, ":")
 }
 
-func (op *redisOP) typeIsJson(v interface{}) Result[bool] {
+func (op *_RedisOper) typeIsJson(v interface{}) sdktypes.Result[bool] {
 	switch v.(type) {
 	case *string, *[]byte, *int,
 		*int8, *int16, *int32,
 		*int64, *uint, *uint8,
 		*uint16, *uint32, *uint64,
 		*float32, *float64, *bool:
-		return Result[bool]{Data: false}
+		return sdktypes.Result[bool]{Data: false}
 	case nil:
-		return Result[bool]{Data: false, Code: CodeServerError.WithMsg("类型为nil")}
+		return sdktypes.Result[bool]{Data: false, Code: sdkcodes.Internal.WithMsg("类型为nil")}
 	default:
-		return Result[bool]{Data: true}
+		return sdktypes.Result[bool]{Data: true}
 	}
 }
 
-func (op *redisOP) Get(v any) ICode {
+func (op *_RedisOper) Get(v any) sdkcodes.Code {
 	opKey := op.buildKey()
 	isJsonResult := op.typeIsJson(&v)
-	if isJsonResult.IsFaild() {
+	if isJsonResult.IsError() {
 		return isJsonResult.Code
 	}
 	result := op.ins.ins.ins.Get(opKey)
 	if result.Err() != nil {
-		return CodeServerError.WithMsg(result.Err().Error())
+		return sdkcodes.Internal.WithMsg("%v", result.Err().Error())
 	}
 	if isJsonResult.Data {
 		if err := json.Unmarshal([]byte(result.Val()), &v); err != nil {
-			return CodeServerError.WithMsg(err.Error())
+			return sdkcodes.Internal.WithMsg("%v", err.Error())
 		}
 	} else {
 		if err := result.Scan(&v); err != nil {
-			return CodeServerError.WithMsg(err.Error())
+			return sdkcodes.Internal.WithMsg("%v", err.Error())
 		}
 	}
 	return nil
 }
 
-func (op *redisOP) Set(val any, expr ...time.Duration) ICode {
+func (op *_RedisOper) Set(val any, expr ...time.Duration) sdkcodes.Code {
 	opKey := op.buildKey()
 	isJsonResult := op.typeIsJson(&val)
-	if isJsonResult.IsFaild() {
+	if isJsonResult.IsError() {
 		return isJsonResult.Code
 	}
 	if isJsonResult.Data {
 		jsonData, err := json.Marshal(val)
 		if err != nil {
-			return CodeServerError.WithMsg(err.Error())
+			return sdkcodes.Internal.WithMsg("%s", err.Error())
 		}
 		if err := op.ins.ins.ins.Set(
 			opKey,
 			string(jsonData),
-			IfCall(
+			sdk.IfCall(
 				len(expr) > 0,
 				func() time.Duration { return expr[0] },
 				func() time.Duration { return time.Duration(0) },
 			),
 		).Err(); err != nil {
-			return CodeServerError.WithMsg(err.Error())
+			return sdkcodes.Internal.WithMsg("%s", err.Error())
 		}
 	} else {
 		if err := op.ins.ins.ins.Set(
 			opKey,
 			val,
-			IfCall(
+			sdk.IfCall(
 				len(expr) > 0,
 				func() time.Duration { return expr[0] },
 				func() time.Duration { return time.Duration(0) },
 			),
 		).Err(); err != nil {
-			return CodeServerError.WithMsg(err.Error())
+			return sdkcodes.Internal.WithMsg("%s", err.Error())
 		}
 	}
 	return nil
 }
 
-func (op *redisOP) IncrByInt(val int64) Result[int64] {
+func (op *_RedisOper) IncrByInt(val int64) sdktypes.Result[int64] {
 	opKey := op.buildKey()
 	v, err := op.ins.ins.ins.IncrBy(opKey, val).Result()
 	if err != nil {
-		return Result[int64]{Code: CodeServerError.WithMsg(err.Error())}
+		return sdktypes.Result[int64]{Code: sdkcodes.Internal.WithMsg("%s", err.Error())}
 	}
-	return Result[int64]{Data: v}
+	return sdktypes.Result[int64]{Data: v}
 }
 
-func (op *redisOP) IncrByFloat(val float64) Result[float64] {
+func (op *_RedisOper) IncrByFloat(val float64) sdktypes.Result[float64] {
 	opKey := op.buildKey()
 	v, err := op.ins.ins.ins.IncrByFloat(opKey, val).Result()
 	if err != nil {
-		return Result[float64]{Code: CodeServerError.WithMsg(err.Error())}
+		return sdktypes.Result[float64]{Code: sdkcodes.Internal.WithMsg(err.Error())}
 	}
-	return Result[float64]{Data: v}
+	return sdktypes.Result[float64]{Data: v}
 }
 
-func (op *redisOP) Del() ICode {
+func (op *_RedisOper) Del() sdkcodes.Code {
 	opKey := op.buildKey()
 	err := op.ins.ins.ins.Del(opKey).Err()
 	if err != nil {
-		return CodeServerError.WithMsg(err.Error())
+		return sdkcodes.Internal.WithMsg(err.Error())
 	}
 	return nil
 }
 
-type _redis struct {
+type _Redis struct {
 	ins    *redis.Client
 	prefix string
 }
 
-var redisIns map[string]*_redis
+var ins map[string]*_Redis
 
 func init() {
-	redisIns = make(map[string]*_redis)
+	ins = make(map[string]*_Redis)
 }
 
-func Redis(key ...string) IRedisSelectKey {
-	return &redisSelectKey{
-		ins: IfCall(
-			len(key) == 0,
-			func() *_redis { return redisIns[""] },
-			func() *_redis { return redisIns[key[0]] },
-		),
-		keys: []string{},
-	}
-}
-
-// InitRedis Redis初始化
-func InitRedis(config *RedisConfig, key ...string) {
+// Init Redis初始化
+func Init(config *Config, key ...string) {
 	client := redis.NewClient(&redis.Options{
 		Addr:     fmt.Sprintf("%s:%v", config.Host, config.Port),
 		Password: config.Password,
 		DB:       config.DB,
 	})
-	r := _redis{
+	r := _Redis{
 		ins:    client,
 		prefix: config.Prefix,
 	}
 	if len(key) == 0 {
-		redisIns[""] = &r
+		ins[""] = &r
 	} else {
-		redisIns[key[0]] = &r
+		ins[key[0]] = &r
+	}
+}
+
+func Ins(key ...string) SelectKey {
+	return &_RedisSelectKey{
+		ins: sdk.IfCall(
+			len(key) == 0,
+			func() *_Redis { return ins[""] },
+			func() *_Redis { return ins[key[0]] },
+		),
+		keys: []string{},
 	}
 }
