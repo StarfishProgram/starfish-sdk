@@ -7,6 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/StarfishProgram/starfish-sdk/sdkcodes"
+	"github.com/StarfishProgram/starfish-sdk/sdklog"
 	"github.com/shopspring/decimal"
 	"golang.org/x/exp/constraints"
 	"gorm.io/gorm"
@@ -135,46 +137,52 @@ func Map[S1 ~[]S1P, S2 ~[]S2P, S1P any, S2P any](datas S1, f func(item S1P) S2P)
 func Go(call func()) {
 	go func() {
 		defer func() {
-			if err := recover(); err != nil {
-				println(err)
+			err := recover()
+			if err == nil {
+				return
 			}
+			if code, ok := err.(sdkcodes.Code); ok {
+				sdklog.Ins().AddCallerSkip(3).Warn(code)
+				return
+			}
+			sdklog.Ins().AddCallerSkip(2).Error(err)
 		}()
 		call()
 	}()
 }
 
-// Check 检查逻辑是否为true
-func Check(expr bool, throwErr ...error) {
+// Check
+func Check(expr bool, code ...sdkcodes.Code) {
 	if !expr {
-		if throwErr != nil {
-			panic(throwErr[0])
+		if code != nil {
+			panic(code[0])
 		} else {
-			panic(errors.New("检查失败"))
+			panic(sdkcodes.Internal)
 		}
 	}
 }
 
-// CheckNil 检查不为Nil
-func CheckNil[V *any](v V, throwErr ...error) {
+// CheckNil
+func CheckNil[V *any](v V, code ...sdkcodes.Code) {
 	if v == nil {
-		if throwErr != nil {
-			panic(throwErr[0])
+		if code != nil {
+			panic(code[0])
 		} else {
-			panic(errors.New("检查失败"))
+			panic(sdkcodes.Internal)
 		}
 	}
 }
 
-// CheckError 检查err不为nil
-func CheckError(err error, throwErr ...error) {
+// CheckError
+func CheckError(err error, code ...sdkcodes.Code) {
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return
 	}
 	if err != nil {
-		if throwErr != nil {
-			panic(throwErr[0])
+		if code != nil {
+			panic(code[0])
 		} else {
-			panic(err)
+			panic(sdkcodes.Internal)
 		}
 	}
 }
