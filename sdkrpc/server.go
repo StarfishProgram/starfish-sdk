@@ -14,13 +14,13 @@ import (
 	anypb "google.golang.org/protobuf/types/known/anypb"
 )
 
-type _Server struct {
+type Server struct {
 	UnimplementedGRPCServiceServer
 	calls map[string]func(*anypb.Any) *anypb.Any
 }
 
 // ServerRegisterCall 注册服务
-func ServerRegisterCall[P, R protoreflect.ProtoMessage](server *_Server, call func(param P) R) {
+func ServerRegisterCall[P, R protoreflect.ProtoMessage](server *Server, call func(param P) R) {
 	var p P
 	paramAny, err := anypb.New(p)
 	if err != nil {
@@ -39,7 +39,7 @@ func ServerRegisterCall[P, R protoreflect.ProtoMessage](server *_Server, call fu
 	sdklog.Ins().AddCallerSkip(1).Info("RPC服务注册 :", paramAny.TypeUrl)
 }
 
-func (s *_Server) Call(ctx context.Context, param *anypb.Any) (result *Result, err error) {
+func (s *Server) Call(ctx context.Context, param *anypb.Any) (result *Result, err error) {
 	result = &Result{Code: nil, Data: nil}
 	call, ok := s.calls[param.TypeUrl]
 	if !ok {
@@ -74,12 +74,12 @@ func (s *_Server) Call(ctx context.Context, param *anypb.Any) (result *Result, e
 	return
 }
 
-func InitServer(listener string) (*_Server, chan os.Signal) {
+func InitServer(listener string) (*Server, chan os.Signal) {
 	lis, err := net.Listen("tcp", listener)
 	if err != nil {
 		sdklog.Ins().Panicf("GRPC服务创建失败 : %s", err.Error())
 	}
-	server := _Server{
+	server := Server{
 		calls: map[string]func(*anypb.Any) *anypb.Any{},
 	}
 	rpcServer := grpc.NewServer()

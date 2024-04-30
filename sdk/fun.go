@@ -124,8 +124,8 @@ func SumCall[S ~[]P, P constraints.Integer | constraints.Float, R any](datas S, 
 }
 
 // Map 数据转换
-func Map[S1 ~[]S1P, S2 ~[]S2P, S1P any, S2P any](datas S1, f func(item S1P) S2P) S2 {
-	result := make(S2, 0, len(datas))
+func Map[P any, R any](datas []P, f func(item P) R) []R {
+	result := make([]R, 0, len(datas))
 	for i := range datas {
 		data := datas[i]
 		r := f(data)
