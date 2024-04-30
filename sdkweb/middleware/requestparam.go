@@ -12,5 +12,6 @@ func RequestParam[T any](call func(*gin.Context, *T)) func(*gin.Context) {
 		err := ctx.ShouldBind(&p)
 		sdk.CheckError(err, sdkcodes.RequestParamInvalid.WithMsg("%s", err.Error()))
 		call(ctx, &p)
+		ctx.Next()
 	}
 }

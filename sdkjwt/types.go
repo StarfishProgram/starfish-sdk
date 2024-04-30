@@ -6,9 +6,9 @@ import (
 
 type Jwt interface {
 	// NewToken 颁发一个新的Token
-	NewToken(data map[string]any) sdktypes.Result[string]
+	NewToken(userId sdktypes.ID, roleId sdktypes.ID, pubkey string) (string, error)
 	// FlushToken 根据旧的令牌信息颁发一个新的Token
-	FlushToken(jwtData *Data) sdktypes.Result[string]
+	FlushToken(jwtData *UserClaims) (string, error)
 	// ParseToken 解析Token
-	ParseToken(tokenStr string) sdktypes.Result[*Data]
+	ParseToken(tokenStr string) (*UserClaims, error)
 }

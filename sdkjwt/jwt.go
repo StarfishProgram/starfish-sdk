@@ -16,54 +16,58 @@ type Config struct {
 	ReissueTime int64  `toml:"reissueTime"` // 重新颁发时间(秒) : 令牌剩余时间小于该值则重新颁发新令牌
 }
 
-type Data struct {
+type UserClaims struct {
 	jwt.RegisteredClaims
-	Data map[string]any
+	UserId sdktypes.ID
+	RoleId sdktypes.ID
+	Pubkey string
 }
 
 type _Jwt struct {
 	config *Config
 }
 
-func (j *_Jwt) NewToken(data map[string]any) sdktypes.Result[string] {
-	jwtData := Data{
+func (j *_Jwt) NewToken(userId sdktypes.ID, roleId sdktypes.ID, pubkey string) (string, error) {
+	jwtData := UserClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    j.config.Issuer,
 			ExpiresAt: jwt.NewNumericDate(time.Unix(time.Now().Unix()+j.config.ExpiresTime, 0)),
 			IssuedAt:  jwt.NewNumericDate(time.Unix(time.Now().Unix(), 0)),
 		},
-		Data: data,
+		UserId: userId,
+		RoleId: roleId,
+		Pubkey: pubkey,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, jwtData)
 	tokenStr, err := token.SignedString([]byte(j.config.SecretKey))
 	if err != nil {
-		return sdktypes.Result[string]{Code: sdkcodes.Internal.WithMsg(err.Error())}
+		return "", sdkcodes.Internal.WithMsg(err.Error())
 	}
-	return sdktypes.Result[string]{Data: tokenStr}
+	return tokenStr, nil
 }
-func (j *_Jwt) FlushToken(jwtData *Data) sdktypes.Result[string] {
+func (j *_Jwt) FlushToken(jwtData *UserClaims) (string, error) {
 	jwtData.ExpiresAt = jwt.NewNumericDate(time.Unix(time.Now().Unix()+j.config.ExpiresTime, 0))
 	jwtData.IssuedAt = jwt.NewNumericDate(time.Unix(time.Now().Unix(), 0))
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, jwtData)
 	tokenStr, err := token.SignedString([]byte(j.config.SecretKey))
 	if err != nil {
-		return sdktypes.Result[string]{Code: sdkcodes.Internal.WithMsg(err.Error())}
+		return "", sdkcodes.Internal.WithMsg(err.Error())
 	}
-	return sdktypes.Result[string]{Data: tokenStr}
+	return tokenStr, nil
 }
 
-func (j *_Jwt) ParseToken(tokenStr string) sdktypes.Result[*Data] {
-	var jwtData = new(Data)
+func (j *_Jwt) ParseToken(tokenStr string) (*UserClaims, error) {
+	var jwtData = new(UserClaims)
 	token, err := jwt.ParseWithClaims(tokenStr, jwtData, func(t *jwt.Token) (interface{}, error) {
 		return []byte(j.config.SecretKey), nil
 	})
 	if err != nil {
-		return sdktypes.Result[*Data]{Code: sdkcodes.AccessLimited.WithMsg(err.Error())}
+		return nil, sdkcodes.AccessLimited.WithMsg(err.Error())
 	}
 	if token.Valid {
-		return sdktypes.Result[*Data]{Data: jwtData}
+		return jwtData, nil
 	}
-	return sdktypes.Result[*Data]{Code: sdkcodes.AccessLimited}
+	return nil, sdkcodes.AccessLimited
 }
 
 var ins map[string]Jwt

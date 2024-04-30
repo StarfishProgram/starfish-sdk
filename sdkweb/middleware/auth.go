@@ -1,56 +1,66 @@
 package sdkwebmiddleware
 
 import (
-	"github.com/StarfishProgram/starfish-sdk/sdk"
-	"github.com/casbin/casbin/v2"
-	"github.com/casbin/casbin/v2/model"
-	gormadapter "github.com/casbin/gorm-adapter/v3"
-	"gorm.io/gorm"
+	"net/http"
+
+	"github.com/StarfishProgram/starfish-sdk/sdkauth"
+	"github.com/StarfishProgram/starfish-sdk/sdkcodes"
+	"github.com/StarfishProgram/starfish-sdk/sdkjwt"
+	"github.com/StarfishProgram/starfish-sdk/sdklog"
+	"github.com/gin-gonic/gin"
 )
 
-var authIns map[string]*casbin.Enforcer
+func Auth(jwt sdkjwt.Jwt, auth *sdkauth.Auth) func(*gin.Context) {
+	return func(ctx *gin.Context) {
+		token := ctx.Request.Header.Get("Token")
+		if token == "" {
+			ctx.JSON(http.StatusOK, gin.H{
+				"code": sdkcodes.AccessLimited.Code(),
+				"msg":  "token not found",
+				"i18n": sdkcodes.AccessLimited.I18n(),
+				"data": nil,
+			})
+			ctx.Abort()
+			return
+		}
+		userClaims, err := jwt.ParseToken(token)
+		if err != nil {
+			ctx.JSON(http.StatusOK, gin.H{
+				"code": sdkcodes.AccessLimited.Code(),
+				"msg":  err.Error(),
+				"i18n": sdkcodes.AccessLimited.I18n(),
+				"data": nil,
+			})
+			ctx.Abort()
+			return
+		}
+		roleId := userClaims.RoleId
+		domain := auth.Domain
+		url := ctx.Request.URL.Path
+		method := ctx.Request.Method
 
-func init() {
-	authIns = make(map[string]*casbin.Enforcer)
-}
-
-func Auth(db *gorm.DB, key ...string) {
-	config, err := model.NewModelFromString(`
-[request_definition]
-r = sub, dom, obj, act
-
-[policy_definition]
-p = sub, dom, obj, act
-
-[role_definition]
-g = _, _, _
-
-[policy_effect]
-e = some(where (p.eft == allow))
-
-[matchers]
-m = g(r.sub, p.sub, r.dom) && r.dom == p.dom && r.obj == p.obj && r.act == p.act
-	`)
-	sdk.CheckError(err)
-
-	gormadapter.TurnOffAutoMigrate(db)
-	adapter, err := gormadapter.NewAdapterByDBUseTableName(db, "sys", "auth_rule")
-	sdk.CheckError(err)
-
-	enforcer, err := casbin.NewEnforcer(config, adapter)
-	sdk.CheckError(err)
-
-	if len(key) == 0 {
-		authIns[""] = enforcer
-	} else {
-		authIns[key[0]] = enforcer
-	}
-}
-
-func AuthIns(key ...string) *casbin.Enforcer {
-	if len(key) == 0 {
-		return authIns[""]
-	} else {
-		return authIns[key[0]]
+		ok, err := auth.Enforce(roleId, domain, url, method)
+		if err != nil {
+			sdklog.Error(err)
+			ctx.JSON(http.StatusOK, gin.H{
+				"code": sdkcodes.Internal.Code(),
+				"msg":  sdkcodes.Internal.Msg(),
+				"i18n": sdkcodes.Internal.I18n(),
+				"data": nil,
+			})
+			ctx.Abort()
+			return
+		}
+		if !ok {
+			ctx.JSON(http.StatusOK, gin.H{
+				"code": sdkcodes.AccessLimited.Code(),
+				"msg":  sdkcodes.AccessLimited.Msg(),
+				"i18n": sdkcodes.AccessLimited.I18n(),
+				"data": nil,
+			})
+			ctx.Abort()
+			return
+		}
+		ctx.Next()
 	}
 }

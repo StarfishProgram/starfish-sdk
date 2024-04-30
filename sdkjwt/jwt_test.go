@@ -13,28 +13,24 @@ func TestJwt(t *testing.T) {
 		ReissueTime: 604800,
 	})
 	// 颁发token
-	tokenResult := Ins().NewToken(map[string]any{
-		"userId":   666,
-		"roleId":   777,
-		"username": "阿强",
-	})
-	if tokenResult.Code != nil {
-		t.Fatal(tokenResult.Code)
+	tokenStr, err := Ins().NewToken(1, 2, "3")
+	if err != nil {
+		t.Fatal(err)
 	}
-	t.Log("颁发token :", tokenResult.Data)
+	t.Log("颁发token :", tokenStr)
 
 	// 解析token
-	claimsResult := Ins().ParseToken(tokenResult.Data)
-	if claimsResult.Code != nil {
-		t.Fatal(claimsResult.Code)
+	userClaims, err := Ins().ParseToken(tokenStr)
+	if err != nil {
+		t.Fatal(err)
 	}
-	t.Log("解析token :", claimsResult.Data)
+	t.Log("解析token :", userClaims)
 
 	// token续签
 	time.Sleep(time.Second * 2)
-	flushTokenResult := Ins().FlushToken(claimsResult.Data)
-	if flushTokenResult.Code != nil {
-		t.Fatal(flushTokenResult.Code)
+	flushToken, err := Ins().FlushToken(userClaims)
+	if err != nil {
+		t.Fatal(err)
 	}
-	t.Log("token续签 :", flushTokenResult.Data)
+	t.Log("token续签 :", flushToken)
 }
