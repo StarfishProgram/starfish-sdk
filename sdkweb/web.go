@@ -7,6 +7,7 @@ import (
 	"github.com/StarfishProgram/starfish-sdk/sdk"
 	"github.com/StarfishProgram/starfish-sdk/sdkcodes"
 	"github.com/StarfishProgram/starfish-sdk/sdklog"
+	sdkwebmiddleware "github.com/StarfishProgram/starfish-sdk/sdkweb/middleware"
 	"github.com/gin-gonic/gin"
 )
 
@@ -39,7 +40,7 @@ func ErrorResponse(ctx *gin.Context, code sdkcodes.Code) {
 func Init(config *Config, routers func(eng *gin.Engine)) chan os.Signal {
 	gin.DisableConsoleColor()
 	server := gin.New()
-	server.Use(MWCatch, MWCors)
+	server.Use(sdkwebmiddleware.Catch, sdkwebmiddleware.Cors)
 	server.NoRoute(func(ctx *gin.Context) {
 		ErrorResponse(ctx, sdkcodes.RequestNotFound)
 	})
