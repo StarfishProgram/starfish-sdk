@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"os/signal"
+	"slices"
 	"syscall"
 
 	"github.com/StarfishProgram/starfish-sdk/sdkcodes"
@@ -185,4 +186,9 @@ func CheckError(err error, code ...sdkcodes.Code) {
 			panic(sdkcodes.Internal.WithMsg("%s", err.Error()))
 		}
 	}
+}
+
+// Reverse 翻转数组
+func Reverse[S ~[]E, E any](s S) {
+	slices.Reverse(s)
 }
