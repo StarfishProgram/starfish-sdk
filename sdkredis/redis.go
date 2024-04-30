@@ -40,7 +40,7 @@ type _RedisOper struct {
 }
 
 func (op *_RedisOper) buildKey() string {
-	opKey := make([]string, len(op.ins.keys)+1)
+	opKey := make([]string, 0, len(op.ins.keys)+1)
 	if op.ins.ins.prefix != "" {
 		opKey = append(opKey, op.ins.ins.prefix)
 	}
@@ -67,7 +67,7 @@ func (op *_RedisOper) typeIsJson(v interface{}) sdktypes.Result[bool] {
 
 func (op *_RedisOper) Get(v any) sdkcodes.Code {
 	opKey := op.buildKey()
-	isJsonResult := op.typeIsJson(&v)
+	isJsonResult := op.typeIsJson(v)
 	if isJsonResult.IsError() {
 		return isJsonResult.Code
 	}
@@ -76,11 +76,11 @@ func (op *_RedisOper) Get(v any) sdkcodes.Code {
 		return sdkcodes.Internal.WithMsg("%v", result.Err().Error())
 	}
 	if isJsonResult.Data {
-		if err := json.Unmarshal([]byte(result.Val()), &v); err != nil {
+		if err := json.Unmarshal([]byte(result.Val()), v); err != nil {
 			return sdkcodes.Internal.WithMsg("%v", err.Error())
 		}
 	} else {
-		if err := result.Scan(&v); err != nil {
+		if err := result.Scan(v); err != nil {
 			return sdkcodes.Internal.WithMsg("%v", err.Error())
 		}
 	}
@@ -89,7 +89,7 @@ func (op *_RedisOper) Get(v any) sdkcodes.Code {
 
 func (op *_RedisOper) Set(val any, expr ...time.Duration) sdkcodes.Code {
 	opKey := op.buildKey()
-	isJsonResult := op.typeIsJson(&val)
+	isJsonResult := op.typeIsJson(val)
 	if isJsonResult.IsError() {
 		return isJsonResult.Code
 	}
