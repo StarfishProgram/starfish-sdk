@@ -42,6 +42,10 @@ func (v *ID) UnmarshalJSON(src []byte) error {
 	return nil
 }
 
+func (v ID) String() string {
+	return strconv.FormatInt(int64(v), 10)
+}
+
 func unquoteIfQuoted(value interface{}) (string, error) {
 	var bytes []byte
 	switch v := value.(type) {
