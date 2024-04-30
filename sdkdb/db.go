@@ -59,7 +59,7 @@ func Init(config *Config, key ...string) {
 	dbLog := logger.New(
 		&_LogWriter{},
 		logger.Config{
-			SlowThreshold:             time.Millisecond * time.Duration(config.SlowTime),
+			SlowThreshold:             time.Millisecond * time.Duration(sdk.If(config.SlowTime <= 0, 200, config.SlowTime)),
 			LogLevel:                  sdk.If(config.ShowSql, logger.Info, logger.Error),
 			IgnoreRecordNotFoundError: true,
 			ParameterizedQueries:      true,
@@ -84,9 +84,15 @@ func Init(config *Config, key ...string) {
 		panic(err)
 	}
 
-	sqlDB.SetMaxIdleConns(config.MaxIdleConn)
-	sqlDB.SetMaxOpenConns(config.MaxOpenConn)
-	sqlDB.SetConnMaxIdleTime(time.Duration(config.MaxLifetime) * time.Second)
+	if config.MaxIdleConn > 0 {
+		sqlDB.SetMaxIdleConns(config.MaxIdleConn)
+	}
+	if config.MaxOpenConn > 0 {
+		sqlDB.SetMaxOpenConns(config.MaxOpenConn)
+	}
+	if config.MaxLifetime > 0 {
+		sqlDB.SetConnMaxIdleTime(time.Duration(config.MaxLifetime) * time.Second)
+	}
 
 	if len(key) == 0 {
 		ins[""] = db
