@@ -66,6 +66,61 @@ func Ins() Log {
 	return ins
 }
 
+// Debug 调试日志
+func Debug(args ...interface{}) {
+	ins.AddCallerSkip(1).Debug(args...)
+}
+
+// Info 信息日志
+func Info(args ...interface{}) {
+	ins.AddCallerSkip(1).Info(args...)
+}
+
+// Warn 警告日志
+func Warn(args ...interface{}) {
+	ins.AddCallerSkip(1).Warn(args...)
+}
+
+// Error 错误日志
+func Error(args ...interface{}) {
+	ins.AddCallerSkip(1).Error(args...)
+}
+
+// Panic 恐慌日志
+func Panic(args ...interface{}) {
+	ins.AddCallerSkip(1).Panic(args...)
+}
+
+// Debugf 调试日志
+func Debugf(format string, args ...interface{}) {
+	ins.AddCallerSkip(1).Debugf(format, args...)
+}
+
+// Infof 信息日志
+func Infof(format string, args ...interface{}) {
+	ins.AddCallerSkip(1).Infof(format, args...)
+}
+
+// Warnf 警告日志
+func Warnf(format string, args ...interface{}) {
+	ins.AddCallerSkip(1).Warnf(format, args...)
+}
+
+// Errorf 错误日志
+func Errorf(format string, args ...interface{}) {
+	ins.AddCallerSkip(1).Errorf(format, args...)
+}
+
+// Panicf 恐慌日志
+func Panicf(format string, args ...interface{}) {
+	ins.AddCallerSkip(1).Panicf(format, args...)
+}
+
+// AddCallerSkip 跳过栈帧
+func AddCallerSkip(skip int) Log {
+	return ins.AddCallerSkip(1).AddCallerSkip(skip)
+}
+
 // Init 初始化日志
 func Init(config *Config) {
 	level, err := zapcore.ParseLevel(config.Level)

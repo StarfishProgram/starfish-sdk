@@ -25,7 +25,7 @@ type _Client struct {
 func InitClient(url string, key ...string) {
 	conn, err := grpc.Dial(url, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		sdklog.Ins().AddCallerSkip(1).Panic(err)
+		sdklog.AddCallerSkip(1).Panic(err)
 	}
 	client := NewGRPCServiceClient(conn)
 	ins := _Client{client: client}
@@ -64,7 +64,7 @@ func Call[P, R protoreflect.ProtoMessage](client *_Client, param P) CallResult[R
 	}
 	result, err := client.client.Call(sdk.Context(), anyParam)
 	if err != nil {
-		sdklog.Ins().AddCallerSkip(1).Error(err)
+		sdklog.AddCallerSkip(1).Error(err)
 		return CallResult[R]{
 			Code: &Code{
 				Code: sdkcodes.Internal.Code(),

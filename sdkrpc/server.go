@@ -24,7 +24,7 @@ func ServerRegisterCall[P, R protoreflect.ProtoMessage](server *Server, call fun
 	var p P
 	paramAny, err := anypb.New(p)
 	if err != nil {
-		sdklog.Ins().AddCallerSkip(1).Panic(err)
+		sdklog.AddCallerSkip(1).Panic(err)
 	}
 	pt := reflect.TypeOf(p).Elem()
 	server.calls[paramAny.TypeUrl] = func(param *anypb.Any) *anypb.Any {
@@ -36,7 +36,7 @@ func ServerRegisterCall[P, R protoreflect.ProtoMessage](server *Server, call fun
 		sdk.CheckError(err)
 		return resultData
 	}
-	sdklog.Ins().AddCallerSkip(1).Info("RPC服务注册 :", paramAny.TypeUrl)
+	sdklog.AddCallerSkip(1).Info("RPC服务注册 :", paramAny.TypeUrl)
 }
 
 func (s *Server) Call(ctx context.Context, param *anypb.Any) (result *Result, err error) {
@@ -59,10 +59,10 @@ func (s *Server) Call(ctx context.Context, param *anypb.Any) (result *Result, er
 					Msg:  code.Msg(),
 					I18N: code.I18n(),
 				}
-				sdklog.Ins().AddCallerSkip(3).Warn(code)
+				sdklog.AddCallerSkip(3).Warn(code)
 				return
 			}
-			sdklog.Ins().AddCallerSkip(2).Error(err)
+			sdklog.AddCallerSkip(2).Error(err)
 			result.Code = &Code{
 				Code: sdkcodes.Internal.Code(),
 				Msg:  sdkcodes.Internal.Msg(),
@@ -77,7 +77,7 @@ func (s *Server) Call(ctx context.Context, param *anypb.Any) (result *Result, er
 func InitServer(listener string) (*Server, chan os.Signal) {
 	lis, err := net.Listen("tcp", listener)
 	if err != nil {
-		sdklog.Ins().Panicf("GRPC服务创建失败 : %s", err.Error())
+		sdklog.Panicf("GRPC服务创建失败 : %s", err.Error())
 	}
 	server := Server{
 		calls: map[string]func(*anypb.Any) *anypb.Any{},
@@ -87,9 +87,9 @@ func InitServer(listener string) (*Server, chan os.Signal) {
 	ch := make(chan os.Signal, 1)
 	go func() {
 		if err := rpcServer.Serve(lis); err != nil {
-			sdklog.Ins().Error("GRPC服务运行异常", err)
+			sdklog.Error("GRPC服务运行异常", err)
 		}
-		sdklog.Ins().Info("GRPC服务已停止")
+		sdklog.Info("GRPC服务已停止")
 		close(ch)
 	}()
 	go func() {

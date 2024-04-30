@@ -30,7 +30,7 @@ type Config struct {
 type _LogWriter struct{}
 
 func (*_LogWriter) Printf(format string, v ...interface{}) {
-	sdklog.Ins().Infof(format, v...)
+	sdklog.Infof(format, v...)
 }
 
 var ins map[string]*gorm.DB

@@ -33,5 +33,5 @@ func TestClient(t *testing.T) {
 		Msg:  "2",
 		I18N: "3",
 	})
-	sdklog.Ins().Info(result)
+	sdklog.Info(result)
 }

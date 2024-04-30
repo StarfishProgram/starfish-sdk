@@ -50,9 +50,9 @@ func Init(config *Config, routers func(eng *gin.Engine)) chan os.Signal {
 	ch := make(chan os.Signal, 1)
 	go func() {
 		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			sdklog.Ins().Error("Web运行异常", err)
+			sdklog.Error("Web运行异常", err)
 		}
-		sdklog.Ins().Info("WEB服务已停止")
+		sdklog.Info("WEB服务已停止")
 		close(ch)
 	}()
 	go func() {

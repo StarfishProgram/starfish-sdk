@@ -16,12 +16,12 @@ func MWCatch(ctx *gin.Context) {
 			return
 		}
 		if code, ok := err.(sdkcodes.Code); ok {
-			sdklog.Ins().AddCallerSkip(3).Warn(code)
+			sdklog.AddCallerSkip(3).Warn(code)
 			ErrorResponse(ctx, code)
 			ctx.Abort()
 			return
 		}
-		sdklog.Ins().AddCallerSkip(2).Error(err)
+		sdklog.AddCallerSkip(2).Error(err)
 		ErrorResponse(ctx, sdkcodes.Internal)
 		ctx.Abort()
 	}()
