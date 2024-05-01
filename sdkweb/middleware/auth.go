@@ -1,6 +1,8 @@
 package sdkwebmiddleware
 
 import (
+	"fmt"
+
 	"github.com/StarfishProgram/starfish-sdk/sdk"
 	"github.com/StarfishProgram/starfish-sdk/sdkauth"
 	"github.com/StarfishProgram/starfish-sdk/sdkcodes"
@@ -18,15 +20,15 @@ func Auth(jwt sdkjwt.Jwt, auth *sdkauth.Auth, domain string) func(*gin.Context) 
 		if err != nil {
 			sdk.Assert(false, sdkcodes.AccessLimited.WithMsg(err.Error()))
 		}
-		roleId := userClaims.RoleId
-		url := ctx.Request.URL.Path
+		role := fmt.Sprintf("ROLE:%s", userClaims.RoleId.String())
+		resource := fmt.Sprintf("%s:%s", domain, ctx.Request.URL.Path)
 
-		ok, err := auth.Enforce(roleId.String(), domain, url)
+		ok, err := auth.Enforce(role, resource)
 		if err != nil {
 			sdklog.Error(err)
 			sdk.Assert(false, sdkcodes.Internal)
 		}
-		sdk.Assert(ok, sdkcodes.AccessLimited)
+		sdk.Assert(ok, sdkcodes.AccessLimited.WithMsg("`%s` 访问受限", ctx.Request.URL.Path))
 
 		if jwt.NeedFlush(userClaims) {
 			newToken, err := jwt.FlushToken(userClaims)

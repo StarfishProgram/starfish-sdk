@@ -5,7 +5,6 @@ go 1.22.2
 require (
 	github.com/casbin/casbin/v2 v2.88.0
 	github.com/casbin/gorm-adapter/v3 v3.24.0
-	github.com/casbin/redis-watcher/v2 v2.5.0
 	github.com/redis/go-redis/v9 v9.0.3
 	github.com/shopspring/decimal v1.4.0
 	go.uber.org/zap v1.27.0
