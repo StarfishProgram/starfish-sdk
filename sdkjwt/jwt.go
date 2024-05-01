@@ -47,7 +47,7 @@ func (j *_Jwt) NewToken(userId sdktypes.ID, roleId sdktypes.ID, pubkey string) (
 	return tokenStr, nil
 }
 func (j *_Jwt) FlushToken(userClaims *UserClaims) (string, error) {
-	userClaims.ExpiresAt = jwt.NewNumericDate(time.Unix(time.Now().Unix()+sdk.IfNil(j.config.ReissueTime, 604800), 0))
+	userClaims.ExpiresAt = jwt.NewNumericDate(time.Unix(time.Now().Unix()+sdk.IfNil(j.config.ExpiresTime, 2592000), 0))
 	userClaims.IssuedAt = jwt.NewNumericDate(time.Unix(time.Now().Unix(), 0))
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, userClaims)
 	tokenStr, err := token.SignedString([]byte(j.config.SecretKey))
