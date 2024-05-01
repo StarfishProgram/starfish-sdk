@@ -20,9 +20,8 @@ func Auth(jwt sdkjwt.Jwt, auth *sdkauth.Auth, domain string) func(*gin.Context) 
 		}
 		roleId := userClaims.RoleId
 		url := ctx.Request.URL.Path
-		method := ctx.Request.Method
 
-		ok, err := auth.Enforce(roleId.String(), domain, url, method)
+		ok, err := auth.Enforce(roleId.String(), domain, url)
 		if err != nil {
 			sdklog.Error(err)
 			sdk.Assert(false, sdkcodes.Internal)
