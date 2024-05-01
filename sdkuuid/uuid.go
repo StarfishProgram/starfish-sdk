@@ -38,9 +38,9 @@ func init() {
 
 // Init 初始化UUID
 func Init(nodeSeq int64, key ...string) {
-	sdk.Check(nodeSeq < 1024)
+	sdk.Assert(nodeSeq < 1024)
 	node, err := snowflake.NewNode(nodeSeq)
-	sdk.CheckError(err)
+	sdk.AssertError(err)
 	_ins := &_UUID{node}
 	if len(key) == 0 {
 		ins[""] = _ins

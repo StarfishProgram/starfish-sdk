@@ -12,7 +12,7 @@ func TestWeb(t *testing.T) {
 	sdklog.Init(&sdklog.Config{Level: "info"})
 	ch := Init(&Config{Listen: "0.0.0.0:12345"}, func(eng *gin.Engine) {
 		eng.GET("/", func(ctx *gin.Context) {
-			sdk.Check(false)
+			sdk.Assert(false)
 		})
 	})
 	signal := sdk.NewSignal()

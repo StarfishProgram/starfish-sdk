@@ -47,14 +47,14 @@ e = some(where (p.eft == allow))
 [matchers]
 m = g(r.sub, p.sub, r.dom) && r.dom == p.dom && r.obj == p.obj && r.act == p.act
 	`)
-	sdk.CheckError(err)
+	sdk.AssertError(err)
 
 	gormadapter.TurnOffAutoMigrate(db)
 	adapter, err := gormadapter.NewAdapterByDBUseTableName(db, "sys", "auth_rule")
-	sdk.CheckError(err)
+	sdk.AssertError(err)
 
 	enforcer, err := casbin.NewEnforcer(casbinConfig, adapter)
-	sdk.CheckError(err)
+	sdk.AssertError(err)
 
 	if config.AutoSync {
 		watcher, err := rediswatcher.NewWatcher(
@@ -67,13 +67,13 @@ m = g(r.sub, p.sub, r.dom) && r.dom == p.dom && r.obj == p.obj && r.act == p.act
 				IgnoreSelf: config.SyncIgnoreSelf,
 			},
 		)
-		sdk.CheckError(err)
+		sdk.AssertError(err)
 
 		err = watcher.SetUpdateCallback(syncCallback)
-		sdk.CheckError(err)
+		sdk.AssertError(err)
 
 		err = enforcer.SetWatcher(watcher)
-		sdk.CheckError(err)
+		sdk.AssertError(err)
 	}
 
 	if len(key) == 0 {

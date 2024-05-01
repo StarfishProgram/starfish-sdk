@@ -30,10 +30,10 @@ func ServerRegisterCall[P, R protoreflect.ProtoMessage](server *Server, call fun
 	server.calls[paramAny.TypeUrl] = func(param *anypb.Any) *anypb.Any {
 		realParam := reflect.New(pt).Interface().(P)
 		err := param.UnmarshalTo(realParam)
-		sdk.CheckError(err)
+		sdk.AssertError(err)
 		callResult := call(realParam)
 		resultData, err := anypb.New(callResult)
-		sdk.CheckError(err)
+		sdk.AssertError(err)
 		return resultData
 	}
 	sdklog.AddCallerSkip(1).Info("RPC服务注册 :", paramAny.TypeUrl)

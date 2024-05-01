@@ -17,7 +17,7 @@ func TestServer(t *testing.T) {
 }
 
 func demoFn(*Code) *Code {
-	sdk.Check(false)
+	sdk.Assert(false)
 	return &Code{
 		Code: 123,
 		Msg:  "456",

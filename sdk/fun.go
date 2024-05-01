@@ -159,8 +159,8 @@ func Go(call func()) {
 	}()
 }
 
-// Check
-func Check(expr bool, code ...sdkcodes.Code) {
+// Assert
+func Assert(expr bool, code ...sdkcodes.Code) {
 	if !expr {
 		if code != nil {
 			panic(code[0])
@@ -170,8 +170,8 @@ func Check(expr bool, code ...sdkcodes.Code) {
 	}
 }
 
-// CheckNil
-func CheckNil[V *any](v V, code ...sdkcodes.Code) {
+// AssertNil
+func AssertNil[V *any](v V, code ...sdkcodes.Code) {
 	if v == nil {
 		if code != nil {
 			panic(code[0])
@@ -181,8 +181,8 @@ func CheckNil[V *any](v V, code ...sdkcodes.Code) {
 	}
 }
 
-// CheckError
-func CheckError(err error, code ...sdkcodes.Code) {
+// AssertError
+func AssertError(err error, code ...sdkcodes.Code) {
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return
 	}
