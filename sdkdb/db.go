@@ -15,16 +15,16 @@ import (
 // Config 数据源配置
 type Config struct {
 	Host        string `toml:"host"`        // 主机
-	Port        int    `toml:"port"`        // 端口
-	User        string `toml:"user"`        // 用户名
+	Port        *int   `toml:"port"`        // 端口
+	Username    string `toml:"username"`    // 用户名
 	Password    string `toml:"password"`    // 密码
 	Database    string `toml:"database"`    // 数据库
-	Config      string `toml:"config"`      // 连接属性
-	MaxIdleConn int    `toml:"maxIdleConn"` // 最大空闲连接数
-	MaxOpenConn int    `toml:"maxOpenConn"` // 最大连接数
-	MaxLifetime int64  `toml:"maxLifetime"` // 最大超时时间(秒)
+	Params      string `toml:"params"`      // 连接属性
+	MaxIdleConn *int   `toml:"maxIdleConn"` // 最大空闲连接数
+	MaxOpenConn *int   `toml:"maxOpenConn"` // 最大连接数
+	MaxLifetime *int64 `toml:"maxLifetime"` // 最大超时时间(秒)
 	ShowSql     bool   `toml:"showSql"`     // 显示执行SQL
-	SlowTime    int64  `toml:"slowTime"`    // 慢查询时间(毫秒)
+	SlowTime    *int64 `toml:"slowTime"`    // 慢查询时间(毫秒)
 }
 
 type _LogWriter struct{}
@@ -42,12 +42,12 @@ func init() {
 // Init 数据源初始化
 func Init(config *Config, key ...string) {
 	dsn := fmt.Sprintf("%v:%v@tcp(%v:%v)/%v?%v",
-		config.User,
+		config.Username,
 		config.Password,
 		config.Host,
-		config.Port,
+		sdk.IfNil(config.Port, 3306),
 		config.Database,
-		config.Config,
+		config.Params,
 	)
 
 	mysqlConfig := mysql.Config{
@@ -59,7 +59,7 @@ func Init(config *Config, key ...string) {
 	dbLog := logger.New(
 		&_LogWriter{},
 		logger.Config{
-			SlowThreshold:             time.Millisecond * time.Duration(sdk.If(config.SlowTime <= 0, 200, config.SlowTime)),
+			SlowThreshold:             time.Millisecond * time.Duration(sdk.IfNil(config.SlowTime, 200)),
 			LogLevel:                  sdk.If(config.ShowSql, logger.Info, logger.Error),
 			IgnoreRecordNotFoundError: true,
 			ParameterizedQueries:      true,
@@ -84,14 +84,14 @@ func Init(config *Config, key ...string) {
 		panic(err)
 	}
 
-	if config.MaxIdleConn > 0 {
-		sqlDB.SetMaxIdleConns(config.MaxIdleConn)
+	if config.MaxIdleConn != nil {
+		sqlDB.SetMaxIdleConns(*config.MaxIdleConn)
 	}
-	if config.MaxOpenConn > 0 {
-		sqlDB.SetMaxOpenConns(config.MaxOpenConn)
+	if config.MaxOpenConn != nil {
+		sqlDB.SetMaxOpenConns(*config.MaxOpenConn)
 	}
-	if config.MaxLifetime > 0 {
-		sqlDB.SetConnMaxIdleTime(time.Duration(config.MaxLifetime) * time.Second)
+	if config.MaxLifetime != nil {
+		sqlDB.SetConnMaxIdleTime(time.Duration(*config.MaxLifetime) * time.Second)
 	}
 
 	if len(key) == 0 {

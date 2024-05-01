@@ -55,6 +55,13 @@ func IfCall[R any](logic bool, r1, r2 func() R) R {
 	}
 }
 
+func IfNil[R any](r *R, d R) R {
+	if r != nil {
+		return *r
+	}
+	return d
+}
+
 // NilDefault 如果data为nil, 则返回default
 func NilDefault[P any](data *P, defaultVal P) P {
 	if data == nil {

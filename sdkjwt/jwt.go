@@ -3,6 +3,7 @@ package sdkjwt
 import (
 	"time"
 
+	"github.com/StarfishProgram/starfish-sdk/sdk"
 	"github.com/StarfishProgram/starfish-sdk/sdkcodes"
 	"github.com/StarfishProgram/starfish-sdk/sdktypes"
 	"github.com/golang-jwt/jwt/v4"
@@ -12,8 +13,8 @@ import (
 type Config struct {
 	Issuer      string `toml:"issuer"`      // 发行人
 	SecretKey   string `toml:"secretKey"`   // 签名私钥
-	ExpiresTime int64  `toml:"expiresTime"` // 失效时间(秒)
-	ReissueTime int64  `toml:"reissueTime"` // 重新颁发时间(秒) : 令牌剩余时间小于该值则重新颁发新令牌
+	ExpiresTime *int64 `toml:"expiresTime"` // 失效时间(秒)
+	ReissueTime *int64 `toml:"reissueTime"` // 重新颁发时间(秒) : 令牌剩余时间小于该值则重新颁发新令牌
 }
 
 type UserClaims struct {
@@ -31,7 +32,7 @@ func (j *_Jwt) NewToken(userId sdktypes.ID, roleId sdktypes.ID, pubkey string) (
 	jwtData := UserClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    j.config.Issuer,
-			ExpiresAt: jwt.NewNumericDate(time.Unix(time.Now().Unix()+j.config.ExpiresTime, 0)),
+			ExpiresAt: jwt.NewNumericDate(time.Unix(time.Now().Unix()+sdk.IfNil(j.config.ExpiresTime, 2592000), 0)),
 			IssuedAt:  jwt.NewNumericDate(time.Unix(time.Now().Unix(), 0)),
 		},
 		UserId: userId,
@@ -45,10 +46,10 @@ func (j *_Jwt) NewToken(userId sdktypes.ID, roleId sdktypes.ID, pubkey string) (
 	}
 	return tokenStr, nil
 }
-func (j *_Jwt) FlushToken(jwtData *UserClaims) (string, error) {
-	jwtData.ExpiresAt = jwt.NewNumericDate(time.Unix(time.Now().Unix()+j.config.ExpiresTime, 0))
-	jwtData.IssuedAt = jwt.NewNumericDate(time.Unix(time.Now().Unix(), 0))
-	token := jwt.NewWithClaims(jwt.SigningMethodHS512, jwtData)
+func (j *_Jwt) FlushToken(userClaims *UserClaims) (string, error) {
+	userClaims.ExpiresAt = jwt.NewNumericDate(time.Unix(time.Now().Unix()+sdk.IfNil(j.config.ReissueTime, 604800), 0))
+	userClaims.IssuedAt = jwt.NewNumericDate(time.Unix(time.Now().Unix(), 0))
+	token := jwt.NewWithClaims(jwt.SigningMethodHS512, userClaims)
 	tokenStr, err := token.SignedString([]byte(j.config.SecretKey))
 	if err != nil {
 		return "", sdkcodes.Internal.WithMsg(err.Error())
@@ -68,6 +69,10 @@ func (j *_Jwt) ParseToken(tokenStr string) (*UserClaims, error) {
 		return jwtData, nil
 	}
 	return nil, sdkcodes.AccessLimited
+}
+
+func (j *_Jwt) NeedFlush(userClaims *UserClaims) bool {
+	return userClaims.ExpiresAt.Unix()-sdk.IfNil(j.config.ReissueTime, 604800) < time.Now().Unix()
 }
 
 var ins map[string]Jwt

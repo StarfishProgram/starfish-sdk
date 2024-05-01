@@ -3,21 +3,21 @@ package sdkredis
 import (
 	"fmt"
 
+	"github.com/StarfishProgram/starfish-sdk/sdk"
 	"github.com/redis/go-redis/v9"
 )
 
 // Config Redis配置
 type Config struct {
-	Host     string `toml:"host"`     // 主机
-	Port     int    `toml:"port"`     // 端口
-	Password string `toml:"password"` // 密码
-	DB       int    `toml:"db"`       // 数据库
-	Prefix   string `toml:"prefix"`   // 前缀
+	Host     string  `toml:"host"`     // 主机
+	Port     *int    `toml:"port"`     // 端口
+	Password string  `toml:"password"` // 密码
+	Prefix   *string `toml:"prefix"`   // 前缀
 }
 
 type Redis struct {
 	*redis.Client
-	Prefix string
+	Prefix *string
 }
 
 var ins map[string]*Redis
@@ -29,9 +29,8 @@ func init() {
 // Init Redis初始化
 func Init(config *Config, key ...string) {
 	client := redis.NewClient(&redis.Options{
-		Addr:     fmt.Sprintf("%s:%v", config.Host, config.Port),
+		Addr:     fmt.Sprintf("%s:%v", config.Host, sdk.IfNil(config.Port, 6379)),
 		Password: config.Password,
-		DB:       config.DB,
 	})
 	r := Redis{
 		Client: client,
