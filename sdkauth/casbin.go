@@ -1,8 +1,6 @@
 package sdkauth
 
 import (
-	"time"
-
 	"github.com/StarfishProgram/starfish-sdk/sdk"
 	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/model"
@@ -26,7 +24,7 @@ func Init(db *gorm.DB, key ...string) {
 r = sub, obj
 
 [policy_definition]
-p = sub, status, obj
+p = sub, obj, status
 
 [role_definition]
 g = _, _, _
@@ -35,7 +33,7 @@ g = _, _, _
 e = some(where (p.eft == allow))
 
 [matchers]
-m = g(r.sub,'enable', p.sub) && r.obj == p.obj && p.status == 'enable'
+m = g(r.sub, p.sub, 'enable') && r.obj == p.obj && p.status == 'enable'
 	`)
 	sdk.AssertError(err)
 
@@ -45,8 +43,6 @@ m = g(r.sub,'enable', p.sub) && r.obj == p.obj && p.status == 'enable'
 
 	enforcer, err := casbin.NewSyncedEnforcer(casbinConfig, adapter)
 	sdk.AssertError(err)
-
-	enforcer.StartAutoLoadPolicy(time.Second)
 
 	if len(key) == 0 {
 		ins[""] = &Auth{enforcer}
