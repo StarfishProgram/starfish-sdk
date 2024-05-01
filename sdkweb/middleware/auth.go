@@ -39,8 +39,24 @@ func Auth(jwt sdkjwt.Jwt, auth *sdkauth.Auth, domain string) func(*gin.Context) 
 			}
 		}
 
-		ctx.Set("userClaims", userClaims)
+		SetUserClaims(ctx, userClaims)
 
 		ctx.Next()
 	}
+}
+
+func GetUserClaims(ctx *gin.Context) (*sdkjwt.UserClaims, bool) {
+	v, ok := ctx.Get("__UserClaims__")
+	if !ok {
+		return nil, false
+	}
+	userClaims, ok := v.(*sdkjwt.UserClaims)
+	if !ok {
+		return nil, false
+	}
+	return userClaims, true
+}
+
+func SetUserClaims(ctx *gin.Context, userClaims *sdkjwt.UserClaims) {
+	ctx.Set("__UserClaims__", userClaims)
 }
