@@ -60,6 +60,18 @@ func Auth(jwt sdkjwt.Jwt, auth *sdkauth.Auth, domain string) func(*gin.Context) 
 			ctx.Abort()
 			return
 		}
+
+		if jwt.NeedFlush(userClaims) {
+			newToken, err := jwt.FlushToken(userClaims)
+			if err != nil {
+				sdklog.Error(err)
+			} else {
+				ctx.Header("Token", newToken)
+			}
+		}
+
+		ctx.Set("userClaims", userClaims)
+
 		ctx.Next()
 	}
 }
