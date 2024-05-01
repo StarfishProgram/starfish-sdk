@@ -38,7 +38,7 @@ func Auth(jwt sdkjwt.Jwt, auth *sdkauth.Auth, domain string) func(*gin.Context) 
 		url := ctx.Request.URL.Path
 		method := ctx.Request.Method
 
-		ok, err := auth.Enforce(roleId, domain, url, method)
+		ok, err := auth.Enforce(roleId.String(), domain, url, method)
 		if err != nil {
 			sdklog.Error(err)
 			ctx.JSON(http.StatusOK, gin.H{
