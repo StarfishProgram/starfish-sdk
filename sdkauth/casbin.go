@@ -63,7 +63,7 @@ m = g(r.sub, p.sub, r.dom) && r.dom == p.dom && r.obj == p.obj && r.act == p.act
 				Options: redis.Options{
 					Password: config.RedisSyncConfig.Password,
 				},
-				Channel:    "/casbin_auth_rule",
+				Channel:    fmt.Sprintf("/%s_casbin_auth_rule", sdk.IfNil(config.RedisSyncConfig.Prefix, "")),
 				IgnoreSelf: config.SyncIgnoreSelf,
 			},
 		)
