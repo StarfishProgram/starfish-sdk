@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Auth(jwt sdkjwt.Jwt, auth *sdkauth.Auth) func(*gin.Context) {
+func Auth(jwt sdkjwt.Jwt, auth *sdkauth.Auth, domain string) func(*gin.Context) {
 	return func(ctx *gin.Context) {
 		token := ctx.Request.Header.Get("Token")
 		if token == "" {
@@ -35,7 +35,6 @@ func Auth(jwt sdkjwt.Jwt, auth *sdkauth.Auth) func(*gin.Context) {
 			return
 		}
 		roleId := userClaims.RoleId
-		domain := auth.Domain
 		url := ctx.Request.URL.Path
 		method := ctx.Request.Method
 
