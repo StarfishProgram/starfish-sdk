@@ -118,7 +118,7 @@ func Panicf(format string, args ...interface{}) {
 
 // AddCallerSkip 跳过栈帧
 func AddCallerSkip(skip int) Log {
-	return ins.AddCallerSkip(1).AddCallerSkip(skip)
+	return ins.AddCallerSkip(skip)
 }
 
 // Init 初始化日志
