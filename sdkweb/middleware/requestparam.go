@@ -10,7 +10,9 @@ func RequestParam[T any](call func(*gin.Context, *T)) func(*gin.Context) {
 	return func(ctx *gin.Context) {
 		var p T
 		err := ctx.ShouldBind(&p)
-		sdk.AssertError(err, sdkcodes.RequestParamInvalid.WithMsg("%s", err.Error()))
+		if err != nil {
+			sdk.Assert(false, sdkcodes.RequestParamInvalid.WithMsg("%s", err.Error()))
+		}
 		call(ctx, &p)
 		ctx.Next()
 	}
