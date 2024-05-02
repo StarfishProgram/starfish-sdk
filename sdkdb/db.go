@@ -8,6 +8,7 @@ import (
 	"github.com/StarfishProgram/starfish-sdk/sdklog"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 )
@@ -108,4 +109,8 @@ func Ins(key ...string) *gorm.DB {
 	} else {
 		return ins[key[0]]
 	}
+}
+
+func LockingForUpdate() clause.Locking {
+	return clause.Locking{Strength: "UPDATE"}
 }
