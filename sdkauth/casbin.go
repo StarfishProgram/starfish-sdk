@@ -27,13 +27,13 @@ r = sub, obj
 p = sub, obj, status
 
 [role_definition]
-g = _, _
+g = _, _, _
 
 [policy_effect]
 e = some(where (p.eft == allow))
 
 [matchers]
-m = g(r.sub, p.sub) && r.obj == p.obj && p.status == '1'
+m = g(r.sub, p.sub, '1') && r.obj == p.obj && p.status == '1'
 	`)
 	sdk.AssertError(err)
 
