@@ -34,12 +34,12 @@ type PagingParam struct {
 }
 
 // Offset 偏移
-func (p *PagingParam) Offset() int64 {
-	return p.Page * p.Rows
+func (p *PagingParam) Offset() int {
+	return int(p.Page * p.Rows)
 }
 
-func (p *PagingParam) Limit() int64 {
-	return p.Rows
+func (p *PagingParam) Limit() int {
+	return int(p.Rows)
 }
 
 // SortSQLString 获取排序SQL
