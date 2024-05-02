@@ -16,9 +16,15 @@ func Catch(ctx *gin.Context) {
 		}
 		if code, ok := err.(sdkcodes.Code); ok {
 			sdklog.AddCallerSkip(3).Warn(code)
+			var msg string
+			if code.Code() == sdkcodes.Internal.Code() {
+				msg = sdkcodes.Internal.Msg()
+			} else {
+				msg = code.Msg()
+			}
 			ctx.JSON(http.StatusOK, gin.H{
 				"code": code.Code(),
-				"msg":  code.Msg(),
+				"msg":  msg,
 				"i18n": code.I18n(),
 				"data": nil,
 			})
