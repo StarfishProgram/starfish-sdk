@@ -1,8 +1,11 @@
 package sdktypes
 
 import (
+	"fmt"
 	"strings"
 	"time"
+
+	"github.com/StarfishProgram/starfish-sdk/sdk"
 )
 
 type BaseModel struct {
@@ -20,8 +23,8 @@ func NewBaseModel(id ID) BaseModel {
 }
 
 type PagingSortKey struct {
-	Key string `form:"key" json:"key"`
-	Asc bool   `form:"asc" json:"asc"`
+	Key  string `form:"key" json:"key"`
+	Desc bool   `form:"desc" json:"desc"`
 }
 
 type PagingParam struct {
@@ -44,29 +47,21 @@ func (p *PagingParam) SortSQLString(rules map[string]string) *string {
 	if len(p.Sorts) == 0 {
 		return nil
 	}
-	var sb strings.Builder
-
+	fieldSorts := make([]string, 0, len(p.Sorts))
 	for i := 0; i < len(p.Sorts); i++ {
 		item := p.Sorts[i]
 		field, exists := rules[item.Key]
 		if !exists {
 			continue
 		}
-		sb.WriteString(field)
-		if item.Asc {
-			sb.WriteString(" asc")
-		} else {
-			sb.WriteString(" desc")
-		}
-		if len(p.Sorts)-1 != i {
-			sb.WriteString(",")
-		}
+		fieldSort := fmt.Sprintf("%s %s", field, sdk.If(item.Desc, "desc", "asc"))
+		fieldSorts = append(fieldSorts, fieldSort)
 	}
-	if sb.Len() == 0 {
+	if len(fieldSorts) == 0 {
 		return nil
 	}
-	s := sb.String()
-	return &s
+	sql := strings.Join(fieldSorts, ", ")
+	return &sql
 }
 
 // PagingResult 分页结果
