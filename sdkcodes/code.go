@@ -34,8 +34,9 @@ func New(code int64, msg string, i18n string) Code {
 var (
 	OK                  = New(0, "OK", "")
 	Internal            = New(1, "服务异常", "")
-	AccessLimited       = New(2, "访问受限", "AccessLimited")
-	RequestNotFound     = New(3, "请求资源不存在", "")
-	RequestParamInvalid = New(4, "请求参数错误", "")
-	TooManyRequests     = New(5, "请求过于频繁", "TooManyRequests")
+	Service             = New(2, "服务异常", "")
+	AccessLimited       = New(3, "访问受限", "AccessLimited")
+	RequestNotFound     = New(4, "请求资源不存在", "")
+	RequestParamInvalid = New(5, "请求参数错误", "")
+	TooManyRequests     = New(6, "请求过于频繁", "TooManyRequests")
 )
