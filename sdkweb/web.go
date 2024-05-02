@@ -16,10 +16,8 @@ type Config struct {
 	Listen string `toml:"listen"` // 监听地址
 }
 
-type MapData map[string]any
-
-func SuccessResponse(ctx *gin.Context, data any) {
-	ctx.JSON(http.StatusOK, gin.H{
+func ResponseData(ctx *gin.Context, data any) {
+	ctx.JSON(http.StatusOK, sdk.AnyMap{
 		"code": sdkcodes.OK.Code(),
 		"msg":  sdkcodes.OK.Msg(),
 		"i18n": sdkcodes.OK.I18n(),
@@ -27,8 +25,8 @@ func SuccessResponse(ctx *gin.Context, data any) {
 	})
 }
 
-func ErrorResponse(ctx *gin.Context, code sdkcodes.Code) {
-	ctx.JSON(http.StatusOK, gin.H{
+func ResponseError(ctx *gin.Context, code sdkcodes.Code) {
+	ctx.JSON(http.StatusOK, sdk.AnyMap{
 		"code": code.Code(),
 		"msg":  code.Msg(),
 		"i18n": code.I18n(),
@@ -42,7 +40,7 @@ func Init(config *Config, routers func(eng *gin.Engine)) chan os.Signal {
 	server := gin.New()
 	server.Use(sdkwebmiddleware.Catch, sdkwebmiddleware.Cors)
 	server.NoRoute(func(ctx *gin.Context) {
-		ErrorResponse(ctx, sdkcodes.RequestNotFound)
+		ResponseError(ctx, sdkcodes.RequestNotFound)
 	})
 	if routers != nil {
 		routers(server)

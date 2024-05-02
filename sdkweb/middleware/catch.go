@@ -3,6 +3,7 @@ package sdkwebmiddleware
 import (
 	"net/http"
 
+	"github.com/StarfishProgram/starfish-sdk/sdk"
 	"github.com/StarfishProgram/starfish-sdk/sdkcodes"
 	"github.com/StarfishProgram/starfish-sdk/sdklog"
 	"github.com/gin-gonic/gin"
@@ -22,7 +23,7 @@ func Catch(ctx *gin.Context) {
 			} else {
 				msg = code.Msg()
 			}
-			ctx.JSON(http.StatusOK, gin.H{
+			ctx.JSON(http.StatusOK, sdk.AnyMap{
 				"code": code.Code(),
 				"msg":  msg,
 				"i18n": code.I18n(),
@@ -32,7 +33,7 @@ func Catch(ctx *gin.Context) {
 			return
 		}
 		sdklog.AddCallerSkip(2).Error(err)
-		ctx.JSON(http.StatusOK, gin.H{
+		ctx.JSON(http.StatusOK, sdk.AnyMap{
 			"code": sdkcodes.Internal.Code(),
 			"msg":  sdkcodes.Internal.Msg(),
 			"i18n": sdkcodes.Internal.I18n(),
