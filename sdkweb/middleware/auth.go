@@ -11,7 +11,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Auth(jwt sdkjwt.Jwt, auth *sdkauth.Auth, domain string) func(*gin.Context) {
+func Auth(
+	jwt sdkjwt.Jwt,
+	auth *sdkauth.Auth,
+	domain string,
+) func(*gin.Context) {
 	return func(ctx *gin.Context) {
 		token := ctx.Request.Header.Get("Token")
 		sdk.Assert(token != "", sdkcodes.AccessLimited.WithMsg("Token不存在"))
@@ -20,10 +24,10 @@ func Auth(jwt sdkjwt.Jwt, auth *sdkauth.Auth, domain string) func(*gin.Context) 
 		if err != nil {
 			sdk.Assert(false, sdkcodes.AccessLimited.WithMsg(err.Error()))
 		}
-		role := fmt.Sprintf("ROLE:%s", userClaims.RoleId.String())
-		resource := fmt.Sprintf("%s:%s", domain, ctx.Request.URL.Path)
+		sub := fmt.Sprintf("role:%s", userClaims.RoleId.String())
+		obj := fmt.Sprintf("%s:%s", domain, ctx.Request.URL.Path)
 
-		ok, err := auth.Enforce(role, resource)
+		ok, err := auth.Enforce(sub, obj)
 		if err != nil {
 			sdklog.Error(err)
 			sdk.Assert(false, sdkcodes.Internal)
