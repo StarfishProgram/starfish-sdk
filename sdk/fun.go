@@ -11,7 +11,6 @@ import (
 	"github.com/StarfishProgram/starfish-sdk/sdkcodes"
 	"github.com/StarfishProgram/starfish-sdk/sdklog"
 	"github.com/shopspring/decimal"
-	"golang.org/x/exp/constraints"
 	"gorm.io/gorm"
 )
 
@@ -71,23 +70,6 @@ func NilDefault[P any](data *P, defaultVal P) P {
 	}
 }
 
-// FindOne 找到任何一个是否满足条件, 如果未找到返回一个nil
-func FindOne[S ~[]E, E *any](datas S, f func(item E) bool) E {
-	for i := range datas {
-		data := datas[i]
-		r := f(data)
-		if r {
-			return data
-		}
-	}
-	return nil
-}
-
-// FindAny 找到任何一个是否满足条件
-func FindAny[S ~[]E, E *any](s S, f func(item E) bool) bool {
-	return FindOne(s, f) != nil
-}
-
 // Filter 数据过滤
 func Filter[S ~[]E, E any](datas S, f func(item E) bool) S {
 	result := make(S, 0, len(datas))
@@ -109,25 +91,6 @@ func Match[T comparable](v T, matchers ...T) bool {
 		}
 	}
 	return false
-}
-
-// Sum 数值累加
-func Sum[S ~[]P, P constraints.Integer | constraints.Float](datas S) P {
-	var result P
-	for i := range datas {
-		data := datas[i]
-		result += data
-	}
-	return result
-}
-
-// SumCall 数值累加，自定义累加过程
-func SumCall[S ~[]P, P constraints.Integer | constraints.Float, R any](datas S, f func(r R, p P) R) R {
-	var result R
-	for i := range datas {
-		result = f(result, datas[i])
-	}
-	return result
 }
 
 // Map 数据转换
@@ -171,7 +134,7 @@ func Assert(expr bool, code ...sdkcodes.Code) {
 }
 
 // AssertNil
-func AssertNil[V *any](v V, code ...sdkcodes.Code) {
+func AssertNil[V any](v *V, code ...sdkcodes.Code) {
 	if v == nil {
 		if code != nil {
 			panic(code[0])
