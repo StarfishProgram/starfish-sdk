@@ -9,7 +9,7 @@ import (
 )
 
 type Auth struct {
-	*casbin.SyncedEnforcer
+	*casbin.Enforcer
 }
 
 var ins map[string]*Auth
@@ -41,7 +41,7 @@ m = g(r.sub, p.sub) && r.obj == p.obj && p.status == '1'
 	adapter, err := gormadapter.NewAdapterByDBUseTableName(db, "sys", "authority_rule")
 	sdk.AssertError(err)
 
-	enforcer, err := casbin.NewSyncedEnforcer(casbinConfig, adapter)
+	enforcer, err := casbin.NewEnforcer(casbinConfig, adapter)
 	sdk.AssertError(err)
 
 	if len(key) == 0 {
