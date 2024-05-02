@@ -63,8 +63,8 @@ func Init(config *Config, key ...string) {
 			SlowThreshold:             time.Millisecond * time.Duration(sdk.IfNil(config.SlowTime, 200)),
 			LogLevel:                  sdk.If(config.ShowSql, logger.Info, logger.Error),
 			IgnoreRecordNotFoundError: true,
-			ParameterizedQueries:      true,
 			Colorful:                  false,
+			// ParameterizedQueries:      true,
 		},
 	)
 	db, err := gorm.Open(mysql.New(mysqlConfig), &gorm.Config{
