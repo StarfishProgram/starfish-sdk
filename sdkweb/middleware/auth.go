@@ -18,11 +18,11 @@ func Auth(
 ) func(*gin.Context) {
 	return func(ctx *gin.Context) {
 		token := ctx.Request.Header.Get("Token")
-		sdk.Assert(token != "", sdkcodes.AccessLimited.WithMsg("Token不存在"))
+		sdk.Assert(token != "", sdkcodes.TokenInvalid.WithMsg("Token不存在"))
 
 		userClaims, err := jwt.ParseToken(token)
 		if err != nil {
-			sdk.Assert(false, sdkcodes.AccessLimited.WithMsg(err.Error()))
+			sdk.Assert(false, sdkcodes.TokenInvalid.WithMsg(err.Error()))
 		}
 		sub := fmt.Sprintf("role:%s", userClaims.RoleId.String())
 		obj := fmt.Sprintf("%s:%s", domain, ctx.Request.URL.Path)
@@ -32,7 +32,7 @@ func Auth(
 			sdklog.Error(err)
 			sdk.Assert(false, sdkcodes.Internal)
 		}
-		sdk.Assert(ok, sdkcodes.AccessLimited.WithMsg("`%s` 访问受限", ctx.Request.URL.Path))
+		sdk.Assert(ok, sdkcodes.AccessLimited.WithMsg("访问受限:%s", ctx.Request.URL.Path))
 
 		if jwt.NeedFlush(userClaims) {
 			newToken, err := jwt.FlushToken(userClaims)
