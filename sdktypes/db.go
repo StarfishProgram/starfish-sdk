@@ -28,24 +28,24 @@ type PagingSortKey struct {
 }
 
 type PagingParam struct {
-	Page  int64           `form:"current" json:"current"`
-	Rows  int64           `form:"pageSize" json:"pageSize"`
-	Sorts []PagingSortKey `form:"sorts" json:"sorts"`
+	Current  int64           `form:"current" json:"current"`
+	PageSize int64           `form:"pageSize" json:"pageSize"`
+	Sorts    []PagingSortKey `form:"sorts" json:"sorts"`
 }
 
 // Offset 偏移
 func (p *PagingParam) Offset() int {
-	if p.Page < 1 || p.Page > 1000 {
+	if p.Current < 1 || p.Current > 1000 {
 		return 0
 	}
-	return int((p.Page - 1)) * p.Limit()
+	return int((p.Current - 1)) * p.Limit()
 }
 
 func (p *PagingParam) Limit() int {
-	if p.Rows <= 0 || p.Rows > 10000 {
+	if p.PageSize <= 0 || p.PageSize > 10000 {
 		return 30
 	}
-	return int(p.Rows)
+	return int(p.PageSize)
 }
 
 // SortSQLString 获取排序SQL
