@@ -28,17 +28,23 @@ type PagingSortKey struct {
 }
 
 type PagingParam struct {
-	Page  int64           `form:"page" json:"page" binding:"gte=0,lte=1000"`
-	Rows  int64           `form:"rows" json:"rows" binding:"required,gte=1,lte=10000"`
+	Page  int64           `form:"current" json:"current"`
+	Rows  int64           `form:"pageSize" json:"pageSize"`
 	Sorts []PagingSortKey `form:"sorts" json:"sorts"`
 }
 
 // Offset 偏移
 func (p *PagingParam) Offset() int {
-	return int(p.Page * p.Rows)
+	if p.Page < 1 || p.Page > 1000 {
+		return 0
+	}
+	return int((p.Page - 1)) * p.Limit()
 }
 
 func (p *PagingParam) Limit() int {
+	if p.Rows <= 0 || p.Rows > 10000 {
+		return 30
+	}
 	return int(p.Rows)
 }
 
