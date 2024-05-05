@@ -27,6 +27,14 @@ func (*Dao[T]) GetExistsByIds(
 	return int64(len(ids)) == count
 }
 
+func (d *Dao[T]) GetExistsById(
+	tx *gorm.DB,
+	id sdktypes.ID,
+	locking bool,
+) bool {
+	return d.GetExistsByIds(tx, []sdktypes.ID{id}, locking)
+}
+
 func (*Dao[T]) GetByIds(
 	tx *gorm.DB,
 	ids []sdktypes.ID,
@@ -47,6 +55,18 @@ func (*Dao[T]) GetByIds(
 	return rows
 }
 
+func (d *Dao[T]) GetById(
+	tx *gorm.DB,
+	id sdktypes.ID,
+	locking bool,
+) *T {
+	rows := d.GetByIds(tx, []sdktypes.ID{id}, locking)
+	if len(rows) > 0 {
+		return rows[0]
+	}
+	return nil
+}
+
 func (*Dao[T]) DeleteByIds(
 	tx *gorm.DB,
 	ids []sdktypes.ID,
@@ -56,6 +76,14 @@ func (*Dao[T]) DeleteByIds(
 	result := tx.Delete(&t, ids)
 	sdk.AssertError(result.Error, code)
 	return result.RowsAffected
+}
+
+func (d *Dao[T]) DeleteById(
+	tx *gorm.DB,
+	id sdktypes.ID,
+	code sdkcodes.Code,
+) int64 {
+	return d.DeleteByIds(tx, []sdktypes.ID{id}, code)
 }
 
 func (*Dao[T]) Delete(
@@ -83,6 +111,15 @@ func (*Dao[T]) ChangeByIds(
 	result := query.UpdateColumns(updates)
 	sdk.AssertError(result.Error, code)
 	return result.RowsAffected
+}
+
+func (d *Dao[T]) ChangeById(
+	tx *gorm.DB,
+	updates map[string]any,
+	id sdktypes.ID,
+	code sdkcodes.Code,
+) int64 {
+	return d.ChangeByIds(tx, updates, []sdktypes.ID{id}, code)
 }
 
 func (*Dao[T]) Change(
