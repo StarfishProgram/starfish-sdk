@@ -74,7 +74,7 @@ func (*Dao[T]) Delete(
 func (*Dao[T]) ChangeByIds(
 	tx *gorm.DB,
 	updates map[string]any,
-	ids sdktypes.ID,
+	ids []sdktypes.ID,
 	code sdkcodes.Code,
 ) int64 {
 	var t T
