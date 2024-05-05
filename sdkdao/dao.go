@@ -108,3 +108,12 @@ func (*Dao[T]) Save(
 	sdk.AssertError(result.Error, code)
 	sdk.Assert(result.RowsAffected == 1, code)
 }
+
+func (*Dao[T]) SaveInBatch(
+	tx *gorm.DB,
+	ts []*T,
+	code sdkcodes.Code,
+) {
+	result := tx.CreateInBatches(&ts, 1000)
+	sdk.AssertError(result.Error, code)
+}
