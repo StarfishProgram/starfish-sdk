@@ -98,3 +98,13 @@ func (*Dao[T]) Change(
 	sdk.AssertError(result.Error, code)
 	return result.RowsAffected
 }
+
+func (*Dao[T]) Save(
+	tx *gorm.DB,
+	t *T,
+	code sdkcodes.Code,
+) {
+	result := tx.Create(t)
+	sdk.AssertError(result.Error, code)
+	sdk.Assert(result.RowsAffected == 1, code)
+}
