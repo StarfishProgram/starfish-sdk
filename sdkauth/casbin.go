@@ -58,25 +58,33 @@ m = g(r.sub, p.sub, '1') && r.obj == p.obj && p.status == '1'
 	}
 }
 
+func loadSettings(db *gorm.DB) *int64 {
+	var json sdktypes.JSON
+	query := db.Table("sys_settings")
+	query.Where("`k1` = 'sys_authority_rule'")
+	query.Select("`value`").Limit(1)
+	if err := query.Scan(&json).Error; err != nil {
+		sdklog.Warn("查询规则配置失败:", err)
+		return nil
+	}
+	var dbId int64
+	if err := json.To(&dbId); err != nil {
+		sdklog.Warn("读取规则配置失败:", err)
+		return nil
+	}
+	return &dbId
+}
+
 func SyncRules(db *gorm.DB, auth *Auth) {
 	var localId int64
-	t := time.NewTimer(10 * time.Second)
+	if dbId := loadSettings(db); dbId != nil {
+		localId = *dbId
+	}
+	t := time.NewTicker(10 * time.Second)
 	for {
 		<-t.C
-		var json sdktypes.JSON
-		query := db.Table("sys_settings")
-		query.Where("`k1` = 'sys_authority_rule'")
-		query.Select("`value`").Limit(1)
-		if err := query.Scan(&json).Error; err != nil {
-			sdklog.Warn("查询规则配置失败:", err)
-			continue
-		}
-		var dbId int64
-		if err := json.To(&dbId); err != nil {
-			sdklog.Warn("读取规则配置失败:", err)
-			continue
-		}
-		if localId == dbId {
+		dbId := loadSettings(db)
+		if dbId == nil || localId == *dbId {
 			continue
 		}
 		sdklog.Infof("规则配置更新中[%d].....", dbId)
@@ -84,7 +92,7 @@ func SyncRules(db *gorm.DB, auth *Auth) {
 			sdklog.Warn("规则配置更新失败:", err)
 			continue
 		}
-		localId = dbId
+		localId = *dbId
 		sdklog.Info("规则配置已更新:", localId)
 	}
 }
