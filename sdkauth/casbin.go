@@ -87,13 +87,13 @@ func SyncRules(db *gorm.DB, auth *Auth) {
 		if dbId == nil || localId == *dbId {
 			continue
 		}
-		sdklog.Infof("规则配置更新中[%d].....", dbId)
+		sdklog.Infof("发现新规则配置[%d]", *dbId)
 		if err := auth.LoadPolicy(); err != nil {
-			sdklog.Warn("规则配置更新失败:", err)
+			sdklog.Warn("规则配置同步失败:", err)
 			continue
 		}
 		localId = *dbId
-		sdklog.Info("规则配置已更新:", localId)
+		sdklog.Infof("规则配置已同步[%d]", localId)
 	}
 }
 
