@@ -7,13 +7,15 @@ import (
 	"fmt"
 )
 
-type JSON json.RawMessage
+type JSON struct {
+	Raw json.RawMessage
+}
 
 func (v JSON) Value() (driver.Value, error) {
-	if len(v) == 0 {
+	if len(v.Raw) == 0 {
 		return nil, nil
 	}
-	return json.RawMessage(v).MarshalJSON()
+	return v.Raw.MarshalJSON()
 }
 
 func (v *JSON) Scan(value interface{}) error {
@@ -21,20 +23,27 @@ func (v *JSON) Scan(value interface{}) error {
 	if !ok {
 		return errors.New(fmt.Sprint("Failed to unmarshal JSONB value:", value))
 	}
-	result := json.RawMessage{}
-	err := json.Unmarshal(bytes, &result)
-	*v = JSON(result)
+	err := json.Unmarshal(bytes, &v.Raw)
 	return err
 }
 
-func Marshal(data any) (JSON, error) {
-	j, err := json.Marshal(data)
-	if err != nil {
-		return nil, err
-	}
-	return JSON(j), nil
+func (v JSON) MarshalJSON() ([]byte, error) {
+	return v.Raw.MarshalJSON()
 }
 
-func Unmarshal(j JSON, data any) error {
-	return json.Unmarshal(j, data)
+func (v *JSON) UnmarshalJSON(data []byte) error {
+	return v.Raw.UnmarshalJSON(data)
+}
+
+func (v *JSON) Parse(data any) error {
+	bytes, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+	v.UnmarshalJSON(bytes)
+	return nil
+}
+
+func (v *JSON) To(data any) error {
+	return json.Unmarshal(v.Raw, data)
 }
