@@ -2,6 +2,7 @@ package sdkdao
 
 import (
 	"github.com/StarfishProgram/starfish-sdk/sdk"
+	"github.com/StarfishProgram/starfish-sdk/sdkcodes"
 	"github.com/StarfishProgram/starfish-sdk/sdkdb"
 	"github.com/StarfishProgram/starfish-sdk/sdktypes"
 	"gorm.io/gorm"
@@ -49,33 +50,51 @@ func (*Dao[T]) GetByIds(
 func (*Dao[T]) DeleteByIds(
 	tx *gorm.DB,
 	ids []sdktypes.ID,
-) {
+	code sdkcodes.Code,
+) int64 {
 	var t T
 	result := tx.Delete(&t, ids)
-	sdk.AssertError(result.Error)
-	sdk.Assert(result.RowsAffected == int64(len(ids)))
+	sdk.AssertError(result.Error, code)
+	return result.RowsAffected
+}
+
+func (*Dao[T]) Delete(
+	tx *gorm.DB,
+	condition func(tx *gorm.DB),
+	code sdkcodes.Code,
+) int64 {
+	var t T
+	query := tx.Model(&t)
+	condition(query)
+	result := tx.Delete(&t)
+	sdk.AssertError(result.Error, code)
+	return result.RowsAffected
 }
 
 func (*Dao[T]) ChangeByIds(
 	tx *gorm.DB,
 	updates map[string]any,
 	ids sdktypes.ID,
-) {
+	code sdkcodes.Code,
+) int64 {
 	var t T
 	query := tx.Model(&t)
 	query.Where("id in ?", ids)
-	err := query.UpdateColumns(updates).Error
-	sdk.AssertError(err)
+	result := query.UpdateColumns(updates)
+	sdk.AssertError(result.Error, code)
+	return result.RowsAffected
 }
 
 func (*Dao[T]) Change(
 	tx *gorm.DB,
 	updates map[string]any,
 	condition func(tx *gorm.DB),
-) {
+	code sdkcodes.Code,
+) int64 {
 	var t T
 	query := tx.Model(&t)
 	condition(query)
-	err := query.UpdateColumns(updates).Error
-	sdk.AssertError(err)
+	result := query.UpdateColumns(updates)
+	sdk.AssertError(result.Error, code)
+	return result.RowsAffected
 }
