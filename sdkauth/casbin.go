@@ -1,7 +1,11 @@
 package sdkauth
 
 import (
+	"time"
+
 	"github.com/StarfishProgram/starfish-sdk/sdk"
+	"github.com/StarfishProgram/starfish-sdk/sdklog"
+	"github.com/StarfishProgram/starfish-sdk/sdktypes"
 	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/model"
 	gormadapter "github.com/casbin/gorm-adapter/v3"
@@ -44,10 +48,44 @@ m = g(r.sub, p.sub, '1') && r.obj == p.obj && p.status == '1'
 	enforcer, err := casbin.NewEnforcer(casbinConfig, adapter)
 	sdk.AssertError(err)
 
+	auth := &Auth{enforcer}
+	go SyncRules(db, auth)
+
 	if len(key) == 0 {
-		ins[""] = &Auth{enforcer}
+		ins[""] = auth
 	} else {
-		ins[key[0]] = &Auth{enforcer}
+		ins[key[0]] = auth
+	}
+}
+
+func SyncRules(db *gorm.DB, auth *Auth) {
+	var localId int64
+	t := time.NewTimer(10 * time.Second)
+	for {
+		<-t.C
+		var json sdktypes.JSON
+		query := db.Table("sys_settings")
+		query.Where("`k1` = 'sys_authority_rule'")
+		query.Select("`value`").Limit(1)
+		if err := query.Scan(&json).Error; err != nil {
+			sdklog.Warn("查询规则配置失败:", err)
+			continue
+		}
+		var dbId int64
+		if err := json.To(&dbId); err != nil {
+			sdklog.Warn("读取规则配置失败:", err)
+			continue
+		}
+		if localId == dbId {
+			continue
+		}
+		sdklog.Infof("规则配置更新中[%d].....", dbId)
+		if err := auth.LoadPolicy(); err != nil {
+			sdklog.Warn("规则配置更新失败:", err)
+			continue
+		}
+		localId = dbId
+		sdklog.Info("规则配置已更新:", localId)
 	}
 }
 
